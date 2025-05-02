@@ -1,5 +1,6 @@
 ﻿using ElectroTech.DataAccess;
 using ElectroTech.Helpers;
+using ElectroTech.Services;
 using System;
 using System.Collections.Generic;
 using System.Windows;
@@ -13,6 +14,7 @@ namespace ElectroTech.Views
     public partial class RecuperarContrasenaView : Window
     {
         private readonly UsuarioRepository _usuarioRepository;
+        private readonly ElectroTechMailService _mailService;
 
         /// <summary>
         /// Constructor de la ventana de recuperación de contraseña
@@ -21,7 +23,8 @@ namespace ElectroTech.Views
         {
             InitializeComponent();
             _usuarioRepository = new UsuarioRepository();
-            txtUsuario.Focus();
+            _mailService = new ElectroTechMailService();
+            txtCorreo.Focus();
         }
 
         /// <summary>
@@ -32,36 +35,45 @@ namespace ElectroTech.Views
             try
             {
                 // Obtener y validar datos
-                string nombreUsuario = txtUsuario.Text.Trim();
                 string correo = txtCorreo.Text.Trim();
 
-                if (string.IsNullOrEmpty(nombreUsuario) || string.IsNullOrEmpty(correo))
+                if (string.IsNullOrEmpty(correo))
                 {
-                    MostrarMensaje("Por favor, complete todos los campos.", false);
+                    MostrarMensaje("Por favor, ingresa tu correo electrónico.", false);
                     return;
                 }
 
-                // En una aplicación real, aquí se verificaría si el usuario existe y el correo coincide
-                // Luego se enviaría un correo con instrucciones de recuperación
-
-                // Verificar si el usuario existe
-                bool existeUsuario = VerificarUsuario(nombreUsuario, correo);
-
-                if (existeUsuario)
+                // Verificar formato básico de correo
+                if (!EsFormatoCorreoValido(correo))
                 {
-                    // Simulamos el envío de correo
-                    GenerarEnlaceRecuperacion(nombreUsuario);
+                    MostrarMensaje("Por favor, ingresa un correo electrónico válido.", false);
+                    return;
+                }
 
-                    MostrarMensaje("Se han enviado las instrucciones de recuperación a tu correo electrónico. " +
-                        "Por favor, revisa tu bandeja de entrada.", true);
+                // Recuperar información del usuario y contraseña
+                var datosUsuario = ObtenerDatosUsuario(correo);
 
-                    // Limpiar campos
-                    txtUsuario.Text = string.Empty;
-                    txtCorreo.Text = string.Empty;
+                if (datosUsuario != null)
+                {
+                    // Enviar correo con la contraseña
+                    bool enviado = _mailService.EnviarContrasena(correo, datosUsuario.Item1, datosUsuario.Item2);
+
+                    if (enviado)
+                    {
+                        MostrarMensaje("Se ha enviado tu contraseña al correo electrónico registrado. " +
+                            "Por favor, revisa tu bandeja de entrada.", true);
+
+                        // Limpiar campos
+                        txtCorreo.Text = string.Empty;
+                    }
+                    else
+                    {
+                        MostrarMensaje("Error al enviar el correo. Por favor, intenta nuevamente más tarde.", false);
+                    }
                 }
                 else
                 {
-                    MostrarMensaje("No se encontró un usuario con los datos ingresados.", false);
+                    MostrarMensaje("No se encontró ninguna cuenta asociada a este correo electrónico.", false);
                 }
             }
             catch (Exception ex)
@@ -72,47 +84,108 @@ namespace ElectroTech.Views
         }
 
         /// <summary>
-        /// Verifica si existe un usuario con el nombre y correo proporcionados
+        /// Verifica si el formato del correo es válido (comprobación básica)
         /// </summary>
-        private bool VerificarUsuario(string nombreUsuario, string correo)
+        private bool EsFormatoCorreoValido(string correo)
         {
             try
             {
-                // En una aplicación real, aquí se haría una consulta a la base de datos
-                // Para este ejemplo, simulamos una verificación
-
-                string query = "SELECT COUNT(*) FROM Usuario WHERE nombreUsuario = :nombreUsuario AND correo = :correo";
-
-                Dictionary<string, object> parameters = new Dictionary<string, object>
-                {
-                    { ":nombreUsuario", nombreUsuario },
-                    { ":correo", correo }
-                };
-
-                object result = SqlHelper.ExecuteScalar(query, parameters);
-                int count = Convert.ToInt32(result);
-
-                return count > 0;
+                var addr = new System.Net.Mail.MailAddress(correo);
+                return addr.Address == correo;
             }
-            catch (Exception ex)
+            catch
             {
-                Logger.LogException(ex, "Error al verificar usuario para recuperación de contraseña");
                 return false;
             }
         }
 
         /// <summary>
-        /// Genera un enlace de recuperación (simulado para este ejemplo)
+        /// Obtiene los datos del usuario a partir del correo
         /// </summary>
-        private void GenerarEnlaceRecuperacion(string nombreUsuario)
+        /// <returns>Tupla con (nombreUsuario, contraseña) o null si no existe</returns>
+        private Tuple<string, string> ObtenerDatosUsuario(string correo)
         {
-            // En una aplicación real, aquí se generaría un token y se enviaría por correo
-            // Para este ejemplo, solo registramos en el log
+            try
+            {
+                string query = @"
+                    SELECT nombreUsuario, clave 
+                    FROM Usuario 
+                    WHERE correo = :correo AND estado = 'A'";
 
-            string token = Guid.NewGuid().ToString();
-            Logger.LogInfo($"Generado token de recuperación de contraseña para el usuario {nombreUsuario}: {token}");
+                Dictionary<string, object> parameters = new Dictionary<string, object>
+                {
+                    { ":correo", correo }
+                };
 
-            // En un caso real, aquí se enviaría un correo con un enlace que contenga el token
+                var dataTable = SqlHelper.ExecuteQuery(query, parameters);
+
+                if (dataTable.Rows.Count > 0)
+                {
+                    string nombreUsuario = dataTable.Rows[0]["nombreUsuario"].ToString();
+                    string claveHash = dataTable.Rows[0]["clave"].ToString();
+
+                    // En una aplicación real, aquí debería generarse una nueva contraseña temporal
+                    // y actualizarla en la base de datos, en lugar de enviar la actual (que está hasheada)
+
+                    // Para este ejemplo, usamos una contraseña temporal
+                    string contrasenaTemporal = GenerarContrasenaTemporal();
+                    ActualizarContrasenaUsuario(nombreUsuario, contrasenaTemporal);
+
+                    return new Tuple<string, string>(nombreUsuario, contrasenaTemporal);
+                }
+
+                return null;
+            }
+            catch (Exception ex)
+            {
+                Logger.LogException(ex, "Error al obtener datos de usuario para recuperación");
+                return null;
+            }
+        }
+
+        /// <summary>
+        /// Genera una contraseña temporal aleatoria
+        /// </summary>
+        private string GenerarContrasenaTemporal()
+        {
+            const string chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+            var random = new Random();
+            var result = new char[8]; // Contraseña de 8 caracteres
+
+            for (int i = 0; i < result.Length; i++)
+            {
+                result[i] = chars[random.Next(chars.Length)];
+            }
+
+            return new string(result);
+        }
+
+        /// <summary>
+        /// Actualiza la contraseña del usuario en la base de datos
+        /// </summary>
+        private bool ActualizarContrasenaUsuario(string nombreUsuario, string nuevaContrasena)
+        {
+            try
+            {
+                // Hashear la nueva contraseña
+                string hashedPassword = PasswordValidator.HashPassword(nuevaContrasena);
+
+                string query = "UPDATE Usuario SET clave = :clave WHERE nombreUsuario = :nombreUsuario";
+
+                Dictionary<string, object> parameters = new Dictionary<string, object>
+                {
+                    { ":clave", hashedPassword },
+                    { ":nombreUsuario", nombreUsuario }
+                };
+
+                int rowsAffected = SqlHelper.ExecuteNonQuery(query, parameters);
+                return rowsAffected > 0;
+            }
+            catch (Exception ex)
+            {
+                Logger.LogException(ex, "Error al actualizar contraseña temporal");
+                return false;
+            }
         }
 
         /// <summary>

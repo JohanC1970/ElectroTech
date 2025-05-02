@@ -98,12 +98,28 @@
     </ApplicationDefinition>
     <Compile Include="DataAccess\DatabaseInitializer.cs" />
     <Compile Include="DataAccess\EmpleadoRepository.cs" />
+    <Compile Include="DataAccess\ProductoRepository.cs" />
     <Compile Include="Helpers\DatabaseException.cs" />
     <Compile Include="Helpers\DbSettings.cs" />
     <Compile Include="Helpers\SqlHelper.cs" />
     <Compile Include="Services\AuthService.cs" />
+    <Compile Include="Services\ElectroTechMailService.cs" />
+    <Compile Include="Services\MailService.cs" />
+    <Compile Include="Services\ProductoService.cs" />
+    <Compile Include="Views\DashboardPage.xaml.cs">
+      <DependentUpon>DashboardPage.xaml</DependentUpon>
+    </Compile>
     <Compile Include="Views\LoginView.xaml.cs">
       <DependentUpon>LoginView.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Views\MainDashboardWindow.xaml.cs">
+      <DependentUpon>MainDashboardWindow.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Views\ProductoDetailWindow.xaml.cs">
+      <DependentUpon>ProductoDetailWindow.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Views\ProductosPage.xaml.cs">
+      <DependentUpon>ProductosPage.xaml</DependentUpon>
     </Compile>
     <Compile Include="Views\RecuperarContrasena.xaml.cs">
       <DependentUpon>RecuperarContrasena.xaml</DependentUpon>
@@ -125,7 +141,26 @@
       <DependentUpon>MainWindow.xaml</DependentUpon>
       <SubType>Code</SubType>
     </Compile>
+    <Page Include="Views\DashboardPage.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
     <Page Include="Views\LoginView.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Views\MainDashboardWindow.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Views\MenuButtonStyle.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Views\ProductoDetailWindow.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Views\ProductosPage.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>

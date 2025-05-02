@@ -73,7 +73,16 @@ namespace ElectroTech.DataAccess
             }
             catch (Exception ex)
             {
-                Logger.LogException(ex, "Error al probar la conexión a la base de datos");
+                // Capture el mensaje de error específico
+                string errorMessage = ex.Message;
+                Logger.LogError($"Error específico de conexión: {errorMessage}");
+
+                // Si hay una excepción interna, captúrela también
+                if (ex.InnerException != null)
+                {
+                    Logger.LogError($"Inner Exception: {ex.InnerException.Message}");
+                }
+
                 return false;
             }
         }

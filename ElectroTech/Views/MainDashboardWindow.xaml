@@ -1,0 +1,200 @@
+﻿<Window x:Class="ElectroTech.Views.MainDashboardWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:ElectroTech.Views"
+        mc:Ignorable="d"
+        Title="ElectroTech - Sistema de Gestión" 
+        Height="700" 
+        Width="1200" 
+        WindowStartupLocation="CenterScreen"
+        Background="#F5F5F5">
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="250"/>
+            <ColumnDefinition Width="*"/>
+        </Grid.ColumnDefinitions>
+
+        <!-- Panel de navegación izquierdo -->
+        <Border Grid.Column="0" Background="#2E5D7D">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+
+                <!-- Logo y título -->
+                <StackPanel Grid.Row="0" Margin="20,30">
+                    <!-- Logo (puedes reemplazar este Rectangle por una Image) -->
+                    <TextBlock Text="ElectroTech" 
+                              FontSize="26" 
+                              FontWeight="Bold" 
+                              Foreground="White"
+                              HorizontalAlignment="Center"/>
+                    <TextBlock Text="Sistema de Gestión" 
+                              FontSize="14" 
+                              Foreground="#CCCCCC"
+                              HorizontalAlignment="Center"
+                              Margin="0,5,0,20"/>
+                </StackPanel>
+
+                <!-- Menú de navegación -->
+                <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+                    <StackPanel Margin="10,0">
+                        <!-- Sección Entidades -->
+                        <TextBlock Text="ENTIDADES" 
+                                  FontSize="12" 
+                                  Foreground="#BBBBBB" 
+                                  Margin="10,5"/>
+
+                        <Button x:Name="btnProductos" 
+                               Content="Productos" 
+                               Style="{StaticResource MenuButtonStyle}"
+                               Click="btnProductos_Click"/>
+
+                        <Button x:Name="btnCategorias" 
+                               Content="Categorías" 
+                               Style="{StaticResource MenuButtonStyle}"
+                               Click="btnCategorias_Click"/>
+
+                        <Button x:Name="btnProveedores" 
+                               Content="Proveedores" 
+                               Style="{StaticResource MenuButtonStyle}"
+                               Click="btnProveedores_Click"/>
+
+                        <Button x:Name="btnClientes" 
+                               Content="Clientes" 
+                               Style="{StaticResource MenuButtonStyle}"
+                               Click="btnClientes_Click"/>
+
+                        <Button x:Name="btnEmpleados" 
+                               Content="Empleados" 
+                               Style="{StaticResource MenuButtonStyle}"
+                               Click="btnEmpleados_Click"/>
+
+                        <!-- Sección Transacciones -->
+                        <TextBlock Text="TRANSACCIONES" 
+                                  FontSize="12" 
+                                  Foreground="#BBBBBB" 
+                                  Margin="10,20,10,5"/>
+
+                        <Button x:Name="btnVentas" 
+                               Content="Ventas" 
+                               Style="{StaticResource MenuButtonStyle}"
+                               Click="btnVentas_Click"/>
+
+                        <Button x:Name="btnCompras" 
+                               Content="Compras" 
+                               Style="{StaticResource MenuButtonStyle}"
+                               Click="btnCompras_Click"/>
+
+                        <Button x:Name="btnDevoluciones" 
+                               Content="Devoluciones" 
+                               Style="{StaticResource MenuButtonStyle}"
+                               Click="btnDevoluciones_Click"/>
+
+                        <Button x:Name="btnInventario" 
+                               Content="Ajustes de Inventario" 
+                               Style="{StaticResource MenuButtonStyle}"
+                               Click="btnInventario_Click"/>
+
+                        <!-- Sección Reportes -->
+                        <TextBlock Text="REPORTES" 
+                                  FontSize="12" 
+                                  Foreground="#BBBBBB" 
+                                  Margin="10,20,10,5"/>
+
+                        <Button x:Name="btnReporteVentas" 
+                               Content="Reporte de Ventas" 
+                               Style="{StaticResource MenuButtonStyle}"
+                               Click="btnReporteVentas_Click"/>
+
+                        <Button x:Name="btnReporteInventario" 
+                               Content="Reporte de Inventario" 
+                               Style="{StaticResource MenuButtonStyle}"
+                               Click="btnReporteInventario_Click"/>
+
+                        <Button x:Name="btnReporteProductos" 
+                               Content="Productos más Vendidos" 
+                               Style="{StaticResource MenuButtonStyle}"
+                               Click="btnReporteProductos_Click"/>
+
+                        <Button x:Name="btnReporteClientes" 
+                               Content="Clientes Frecuentes" 
+                               Style="{StaticResource MenuButtonStyle}"
+                               Click="btnReporteClientes_Click"/>
+
+                        <!-- Sección Configuración (solo admin) -->
+                        <TextBlock x:Name="lblConfiguracion" 
+                                  Text="CONFIGURACIÓN" 
+                                  FontSize="12" 
+                                  Foreground="#BBBBBB" 
+                                  Margin="10,20,10,5"
+                                  Visibility="Collapsed"/>
+
+                        <Button x:Name="btnUsuarios" 
+                               Content="Gestión de Usuarios" 
+                               Style="{StaticResource MenuButtonStyle}"
+                               Click="btnUsuarios_Click"
+                               Visibility="Collapsed"/>
+
+                        <Button x:Name="btnBitacora" 
+                               Content="Bitácora de Accesos" 
+                               Style="{StaticResource MenuButtonStyle}"
+                               Click="btnBitacora_Click"
+                               Visibility="Collapsed"/>
+
+                        <Button x:Name="btnConfiguracion" 
+                               Content="Configuración del Sistema" 
+                               Style="{StaticResource MenuButtonStyle}"
+                               Click="btnConfiguracion_Click"
+                               Visibility="Collapsed"/>
+                    </StackPanel>
+                </ScrollViewer>
+
+                <!-- Información del usuario y botón de salir -->
+                <Border Grid.Row="2" 
+                       Background="#1E4D6D"
+                       Padding="10">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+
+                        <StackPanel Grid.Column="0" Margin="5,0,0,0">
+                            <TextBlock x:Name="txtUsuarioNombre" 
+                                     Text="Nombre Usuario" 
+                                     FontSize="14" 
+                                     Foreground="White"/>
+                            <TextBlock x:Name="txtUsuarioNivel" 
+                                     Text="Nivel" 
+                                     FontSize="12" 
+                                     Foreground="#AAAAAA"/>
+                        </StackPanel>
+
+                        <Button Grid.Column="1" 
+                               x:Name="btnCerrarSesion"
+                               Content="Salir" 
+                               Padding="10,5"
+                               Background="Transparent"
+                               Foreground="White"
+                               BorderThickness="1"
+                               BorderBrush="White"
+                               Click="btnCerrarSesion_Click"/>
+                    </Grid>
+                </Border>
+            </Grid>
+        </Border>
+
+        <!-- Contenido principal -->
+        <Border Grid.Column="1" 
+               Background="White"
+               Margin="10">
+            <Frame x:Name="mainFrame" 
+                  NavigationUIVisibility="Hidden"/>
+        </Border>
+    </Grid>
+</Window>
