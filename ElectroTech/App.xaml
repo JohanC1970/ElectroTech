@@ -27,6 +27,11 @@
                 </Setter>
             </Style>
 
+            <!-- Value Converters -->
+            <local:BoolToSiNoConverter x:Key="BoolToSiNoConverter"/>
+            <local:BoolToColorConverter x:Key="BoolToColorConverter"/>
+            <local:BoolToEstadoConverter x:Key="BoolToEstadoConverter"/>
+
             <!-- Estilo para PasswordBox -->
             <Style TargetType="PasswordBox">
                 <Setter Property="Padding" Value="8,5"/>

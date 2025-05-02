@@ -1,6 +1,7 @@
 ﻿using ElectroTech.Helpers;
 using ElectroTech.Models;
 using ElectroTech.Services;
+using ElectroTech.Views.Empleados;
 using ElectroTech.Views.Productos;
 using System;
 using System.Windows;
@@ -44,6 +45,7 @@ namespace ElectroTech.Views
             this.Closing += MainDashboardWindow_Closing;
         }
 
+
         /// <summary>
         /// Configura la interfaz según el nivel de acceso del usuario
         /// </summary>
@@ -53,25 +55,59 @@ namespace ElectroTech.Views
             txtUsuarioNombre.Text = _usuarioActual.NombreCompleto;
             txtUsuarioNivel.Text = _usuarioActual.NombreNivel;
 
-            // Configurar visibilidad de opciones según el nivel de usuario
-            // Nivel 1: Administrador (acceso completo)
-            // Nivel 2: Paramétrico (sin acceso a configuración)
-            // Nivel 3: Esporádico (solo reportes y consultas)
-            if (_usuarioActual.Nivel == 1) // Administrador
+            // Configurar visibilidad y estado de los elementos de menú según el nivel de usuario
+
+            // Sección de Entidades
+            ConfigurarBotonMenu(btnProductos, PermisosHelper.Modulo.Productos);
+            ConfigurarBotonMenu(btnCategorias, PermisosHelper.Modulo.Categorias);
+            ConfigurarBotonMenu(btnProveedores, PermisosHelper.Modulo.Proveedores);
+            ConfigurarBotonMenu(btnClientes, PermisosHelper.Modulo.Clientes);
+            ConfigurarBotonMenu(btnEmpleados, PermisosHelper.Modulo.Empleados);
+
+            // Sección de Transacciones
+            ConfigurarBotonMenu(btnVentas, PermisosHelper.Modulo.Ventas);
+            ConfigurarBotonMenu(btnCompras, PermisosHelper.Modulo.Compras);
+            ConfigurarBotonMenu(btnDevoluciones, PermisosHelper.Modulo.Devoluciones);
+            ConfigurarBotonMenu(btnInventario, PermisosHelper.Modulo.Inventario);
+
+            // Sección de Reportes
+            ConfigurarBotonMenu(btnReporteVentas, PermisosHelper.Modulo.ReporteVentas);
+            ConfigurarBotonMenu(btnReporteInventario, PermisosHelper.Modulo.ReporteInventario);
+            ConfigurarBotonMenu(btnReporteProductos, PermisosHelper.Modulo.ReporteProductos);
+            ConfigurarBotonMenu(btnReporteClientes, PermisosHelper.Modulo.ReporteClientes);
+
+            // Sección de Configuración - Solo visible para administradores
+            bool esAdmin = PermisosHelper.EsAdministrador(_usuarioActual);
+            lblConfiguracion.Visibility = esAdmin ? Visibility.Visible : Visibility.Collapsed;
+            ConfigurarBotonMenu(btnUsuarios, PermisosHelper.Modulo.Usuarios);
+            ConfigurarBotonMenu(btnBitacora, PermisosHelper.Modulo.Bitacora);
+            ConfigurarBotonMenu(btnConfiguracion, PermisosHelper.Modulo.Configuracion);
+        }
+
+        /// <summary>
+        /// Configura un botón del menú según los permisos del usuario actual.
+        /// </summary>
+        /// <param name="boton">Botón a configurar.</param>
+        /// <param name="modulo">Módulo al que corresponde el botón.</param>
+        private void ConfigurarBotonMenu(Button boton, PermisosHelper.Modulo modulo)
+        {
+            bool tienePermiso = PermisosHelper.TienePermiso(_usuarioActual, modulo);
+
+            // Si no tiene permiso para este módulo, deshabilitar o ocultar el botón
+            boton.IsEnabled = tienePermiso;
+
+            // Opciones avanzadas: podríamos ocultar completamente los botones sin permiso
+            // boton.Visibility = tienePermiso ? Visibility.Visible : Visibility.Collapsed;
+
+            // Si queremos mantener visible pero inactivo (para indicar que existe pero no tiene acceso)
+            if (!tienePermiso)
             {
-                // Mostrar todas las opciones
-                lblConfiguracion.Visibility = Visibility.Visible;
-                btnUsuarios.Visibility = Visibility.Visible;
-                btnBitacora.Visibility = Visibility.Visible;
-                btnConfiguracion.Visibility = Visibility.Visible;
-            }
-            else if (_usuarioActual.Nivel == 3) // Esporádico
-            {
-                // Deshabilitar opciones de transacciones y entidades (solo reportes)
-                DeshabilitarOpcionesTransacciones();
-                DeshabilitarOpcionesEntidades();
+                boton.Opacity = 0.5;
+                boton.ToolTip = "No tiene permisos para acceder a este módulo";
             }
         }
+
+
 
         /// <summary>
         /// Deshabilita las opciones de transacciones para usuarios con nivel 3
@@ -132,26 +168,22 @@ namespace ElectroTech.Views
 
         private void btnCategorias_Click(object sender, RoutedEventArgs e)
         {
-            // TODO: Implementar página de categorías
-            MessageBox.Show("Funcionalidad en desarrollo", "Información", MessageBoxButton.OK, MessageBoxImage.Information);
+            mainFrame.Navigate(new CategoriasPage());
         }
 
         private void btnProveedores_Click(object sender, RoutedEventArgs e)
         {
-            // TODO: Implementar página de proveedores
-            MessageBox.Show("Funcionalidad en desarrollo", "Información", MessageBoxButton.OK, MessageBoxImage.Information);
+            mainFrame.Navigate(new ProveedoresPage());
         }
 
         private void btnClientes_Click(object sender, RoutedEventArgs e)
         {
-            // TODO: Implementar página de clientes
-            MessageBox.Show("Funcionalidad en desarrollo", "Información", MessageBoxButton.OK, MessageBoxImage.Information);
+            mainFrame.Navigate(new ClientesPage());
         }
 
         private void btnEmpleados_Click(object sender, RoutedEventArgs e)
         {
-            // TODO: Implementar página de empleados
-            MessageBox.Show("Funcionalidad en desarrollo", "Información", MessageBoxButton.OK, MessageBoxImage.Information);
+            mainFrame.Navigate(new EmpleadosPage());
         }
 
         private void btnVentas_Click(object sender, RoutedEventArgs e)
@@ -174,8 +206,7 @@ namespace ElectroTech.Views
 
         private void btnInventario_Click(object sender, RoutedEventArgs e)
         {
-            // TODO: Implementar página de ajustes de inventario
-            MessageBox.Show("Funcionalidad en desarrollo", "Información", MessageBoxButton.OK, MessageBoxImage.Information);
+            mainFrame.Navigate(new InventarioPage());
         }
 
         private void btnReporteVentas_Click(object sender, RoutedEventArgs e)

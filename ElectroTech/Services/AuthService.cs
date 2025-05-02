@@ -235,5 +235,43 @@ namespace ElectroTech.Services
                 throw;
             }
         }
+
+        /// <summary>
+        /// Obtiene un usuario por su ID.
+        /// </summary>
+        /// <param name="idUsuario">ID del usuario.</param>
+        /// <returns>El objeto Usuario si se encuentra, null en caso contrario.</returns>
+        public Usuario ObtenerPorId(int idUsuario)
+        {
+            try
+            {
+                return _usuarioRepository.ObtenerPorId(idUsuario);
+            }
+            catch (Exception ex)
+            {
+                Logger.LogException(ex, $"Error al obtener usuario con ID {idUsuario}");
+                throw;
+            }
+        }
+
+        /// <summary>
+        /// Verifica si ya existe un nombre de usuario en el sistema.
+        /// </summary>
+        /// <param name="nombreUsuario">Nombre de usuario a verificar.</param>
+        /// <returns>True si el nombre de usuario ya existe, False en caso contrario.</returns>
+        public bool ExisteNombreUsuario(string nombreUsuario)
+        {
+            try
+            {
+                return _usuarioRepository.ExisteNombreUsuario(nombreUsuario);
+            }
+            catch (Exception ex)
+            {
+                Logger.LogException(ex, $"Error al verificar existencia de nombre de usuario '{nombreUsuario}'");
+                throw;
+            }
+        }
+
+
     }
 }
