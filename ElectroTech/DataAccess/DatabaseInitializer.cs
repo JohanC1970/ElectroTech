@@ -24,36 +24,36 @@ namespace ElectroTech.DataAccess
                 Logger.LogInfo("Iniciando conexión a la base de datos...");
 
                 // Verificar si se puede conectar a la base de datos
-                bool canConnect = TestConnection();
-                if (!canConnect)
+                try
                 {
-                    Logger.LogError("No se pudo conectar a la base de datos con la configuración actual.");
+                    bool canConnect = TestConnection();
+                    if (!canConnect)
+                    {
+                        Logger.LogError("No se pudo conectar a la base de datos con la configuración actual.");
+                        return false;
+                    }
+                }
+                catch (Exception connEx)
+                {
+                    Logger.LogError($"Error específico de conexión: {connEx.Message}");
+                    Logger.LogException(connEx, "Detalles del error de conexión");
                     return false;
                 }
 
                 Logger.LogInfo("Conexión a la base de datos establecida exitosamente.");
 
-                // Crear script de inicialización de la base de datos
-                string scriptPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Scripts", "CreacionBaseDatos.sql");
-                if (!File.Exists(scriptPath))
-                {
-                    Logger.LogInfo("Generando script de creación de base de datos...");
-                    bool scriptCreated = DbSettings.CreateDatabaseScript();
-                    if (!scriptCreated)
-                    {
-                        Logger.LogError("No se pudo generar el script de creación de base de datos.");
-                        return false;
-                    }
-                    Logger.LogInfo("Script de creación de base de datos generado exitosamente.");
-                }
+                // Aquí iría la inicialización del resto del sistema...
 
                 return true;
             }
             catch (Exception ex)
             {
                 Logger.LogException(ex, "Error al inicializar la base de datos");
+                // Opcional: mensaje en pantalla si tienes interfaz gráfica
+                // MessageBox.Show($"Error detallado: {ex.Message}", "Error de inicialización", MessageBoxButton.OK, MessageBoxImage.Error);
                 return false;
             }
+
         }
 
         /// <summary>
