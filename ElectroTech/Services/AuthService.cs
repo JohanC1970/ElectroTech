@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Linq;
 using ElectroTech.DataAccess;
 using ElectroTech.Helpers;
 using ElectroTech.Models;
@@ -30,11 +32,9 @@ namespace ElectroTech.Services
         {
             try
             {
-                // Hashear la contraseña para comparar con la almacenada
-                string hashedPassword = PasswordValidator.HashPassword(clave);
 
                 // Intentar autenticar al usuario
-                Usuario usuario = _usuarioRepository.Autenticar(nombreUsuario, hashedPassword);
+                Usuario usuario = _usuarioRepository.Autenticar(nombreUsuario, clave);
 
                 // Verificar si el usuario existe y está activo
                 if (usuario != null && usuario.Estado == 'A')
@@ -146,78 +146,195 @@ namespace ElectroTech.Services
         /// Crea un nuevo usuario en el sistema.
         /// </summary>
         /// <param name="usuario">Usuario a crear.</param>
-        /// <param name="clave">Contraseña del nuevo usuario.</param>
+        /// <param name="contrasena">Contraseña en texto plano.</param>
         /// <param name="errorMessage">Mensaje de error si la creación falla.</param>
         /// <returns>True si la creación es exitosa, False en caso contrario.</returns>
-        public bool CrearUsuario(Usuario usuario, string clave, out string errorMessage)
+        public bool CrearUsuario(Usuario usuario, string contrasena, out string errorMessage)
         {
-            errorMessage = string.Empty;
-
             try
             {
-               
-
-                // Hashear la contraseña
-                usuario.Clave = PasswordValidator.HashPassword(clave);
-
-                // Crear el usuario en la base de datos
-                int idUsuario = _usuarioRepository.Crear(usuario);
-
-                if (idUsuario > 0)
+                // Validar usuario
+                if (!ValidarUsuario(usuario, out errorMessage))
                 {
-                    usuario.IdUsuario = idUsuario;
-                    Logger.LogInfo($"Usuario {usuario.NombreUsuario} creado exitosamente.");
-                    return true;
-                }
-                else
-                {
-                    errorMessage = "No se pudo crear el usuario en la base de datos.";
-                    Logger.LogError($"Error al crear el usuario {usuario.NombreUsuario}");
                     return false;
                 }
+
+                // Validar contraseña
+                if (string.IsNullOrWhiteSpace(contrasena) || contrasena.Length < 8)
+                {
+                    errorMessage = "La contraseña debe tener al menos 8 caracteres.";
+                    return false;
+                }
+
+                // Verificar que la contraseña tenga al menos una mayúscula, una minúscula y un número
+                if (!ValidarFormatoContrasena(contrasena))
+                {
+                    errorMessage = "La contraseña debe incluir al menos una letra mayúscula, una minúscula y un número.";
+                    return false;
+                }
+
+                // Generar hash de la contraseña
+                string hashContrasena = PasswordValidator.HashPassword(contrasena);
+
+                // Crear el usuario
+                return _usuarioRepository.Crear(usuario, hashContrasena, out errorMessage);
             }
             catch (Exception ex)
             {
                 errorMessage = ex.Message;
-                Logger.LogException(ex, $"Error al crear el usuario {usuario.NombreUsuario}");
+                Logger.LogException(ex, $"Error al crear usuario {usuario.NombreUsuario}");
                 return false;
             }
         }
 
         /// <summary>
-        /// Actualiza los datos de un usuario existente.
+        /// Actualiza un usuario existente sin cambiar su contraseña.
         /// </summary>
         /// <param name="usuario">Usuario con los datos actualizados.</param>
         /// <param name="errorMessage">Mensaje de error si la actualización falla.</param>
         /// <returns>True si la actualización es exitosa, False en caso contrario.</returns>
         public bool ActualizarUsuario(Usuario usuario, out string errorMessage)
         {
-            errorMessage = string.Empty;
-
             try
             {
-                // Actualizar el usuario en la base de datos
-                bool result = _usuarioRepository.Actualizar(usuario);
-
-                if (result)
+                // Validar usuario
+                if (!ValidarUsuario(usuario, out errorMessage))
                 {
-                    Logger.LogInfo($"Usuario {usuario.NombreUsuario} actualizado exitosamente.");
-                }
-                else
-                {
-                    errorMessage = "No se pudo actualizar el usuario en la base de datos.";
-                    Logger.LogError($"Error al actualizar el usuario {usuario.NombreUsuario}");
+                    return false;
                 }
 
-                return result;
+                // Actualizar usuario sin cambiar contraseña
+                return _usuarioRepository.Actualizar(usuario, out errorMessage);
             }
             catch (Exception ex)
             {
                 errorMessage = ex.Message;
-                Logger.LogException(ex, $"Error al actualizar el usuario {usuario.NombreUsuario}");
+                Logger.LogException(ex, $"Error al actualizar usuario con ID {usuario.IdUsuario}");
                 return false;
             }
         }
+
+
+        /// <summary>
+        /// Actualiza un usuario incluyendo su contraseña.
+        /// </summary>
+        /// <param name="usuario">Usuario con los datos actualizados.</param>
+        /// <param name="nuevaContrasena">Nueva contraseña del usuario.</param>
+        /// <param name="errorMessage">Mensaje de error si la actualización falla.</param>
+        /// <returns>True si la actualización es exitosa, False en caso contrario.</returns>
+        public bool ActualizarUsuarioConContrasena(Usuario usuario, string nuevaContrasena, out string errorMessage)
+        {
+            try
+            {
+                
+
+                // Validar contraseña
+                if (string.IsNullOrWhiteSpace(nuevaContrasena) || nuevaContrasena.Length < 8)
+                {
+                    errorMessage = "La contraseña debe tener al menos 8 caracteres.";
+                    return false;
+                }
+
+                // Verificar que la contraseña tenga al menos una mayúscula, una minúscula y un número
+                if (!ValidarFormatoContrasena(nuevaContrasena))
+                {
+                    errorMessage = "La contraseña debe incluir al menos una letra mayúscula, una minúscula y un número.";
+                    return false;
+                }
+
+                // Generar hash de la contraseña
+                string hashContrasena = PasswordValidator.HashPassword(nuevaContrasena);
+
+                // Actualizar usuario con la nueva contraseña
+                return _usuarioRepository.ActualizarConContrasena(usuario, hashContrasena, out errorMessage);
+            }
+            catch (Exception ex)
+            {
+                errorMessage = ex.Message;
+                Logger.LogException(ex, $"Error al actualizar usuario con ID {usuario.IdUsuario}");
+                return false;
+            }
+        }
+
+        // Método para validar un usuario
+        private bool ValidarUsuario(Usuario usuario, out string errorMessage)
+        {
+            errorMessage = string.Empty;
+
+            if (usuario == null)
+            {
+                errorMessage = "El usuario no puede ser nulo.";
+                return false;
+            }
+
+            if (string.IsNullOrWhiteSpace(usuario.NombreUsuario))
+            {
+                errorMessage = "El nombre de usuario es obligatorio.";
+                return false;
+            }
+
+            if (string.IsNullOrWhiteSpace(usuario.NombreCompleto))
+            {
+                errorMessage = "El nombre completo es obligatorio.";
+                return false;
+            }
+
+            if (string.IsNullOrWhiteSpace(usuario.Correo))
+            {
+                errorMessage = "El correo electrónico es obligatorio.";
+                return false;
+            }
+
+            if (!ValidarFormatoCorreo(usuario.Correo))
+            {
+                errorMessage = "El formato del correo electrónico no es válido.";
+                return false;
+            }
+
+            if (usuario.Nivel <= 0 || usuario.Nivel > 3)
+            {
+                errorMessage = "El nivel de usuario debe ser 1, 2 o 3.";
+                return false;
+            }
+
+            if (usuario.Estado != 'A' && usuario.Estado != 'I')
+            {
+                errorMessage = "El estado del usuario debe ser 'A' (Activo) o 'I' (Inactivo).";
+                return false;
+            }
+
+            return true;
+        }
+
+        // Método para validar el formato de la contraseña
+        private bool ValidarFormatoContrasena(string contrasena)
+        {
+            // Comprobar si tiene al menos una mayúscula
+            bool tieneMayuscula = contrasena.Any(c => char.IsUpper(c));
+
+            // Comprobar si tiene al menos una minúscula
+            bool tieneMinuscula = contrasena.Any(c => char.IsLower(c));
+
+            // Comprobar si tiene al menos un número
+            bool tieneNumero = contrasena.Any(c => char.IsDigit(c));
+
+            return tieneMayuscula && tieneMinuscula && tieneNumero;
+        }
+
+        // Método para validar el formato del correo electrónico
+        private bool ValidarFormatoCorreo(string correo)
+        {
+            try
+            {
+                var addr = new System.Net.Mail.MailAddress(correo);
+                return addr.Address == correo;
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
 
         /// <summary>
         /// Verifica si existe un usuario administrador en el sistema.

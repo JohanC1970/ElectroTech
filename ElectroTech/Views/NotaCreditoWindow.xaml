@@ -1,0 +1,72 @@
+﻿<Window x:Class="ElectroTech.Views.Devoluciones.NotaCreditoWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:ElectroTech.Views.Devoluciones"
+        mc:Ignorable="d"
+        Title="Nota de Crédito" 
+        Height="600" 
+        Width="500"
+        WindowStartupLocation="CenterOwner"
+        ResizeMode="NoResize">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- Encabezado -->
+        <Border Grid.Row="0" 
+               Background="#2E5D7D" 
+               Padding="20,15">
+            <TextBlock Text="Nota de Crédito" 
+                     FontSize="22" 
+                     FontWeight="SemiBold" 
+                     Foreground="White"/>
+        </Border>
+
+        <!-- Contenido de la nota de crédito -->
+        <Border Grid.Row="1" 
+               Margin="20"
+               BorderBrush="#CCCCCC"
+               BorderThickness="1"
+               Background="White">
+            <ScrollViewer VerticalScrollBarVisibility="Auto" 
+                        Padding="20">
+                <TextBlock x:Name="txtNotaCredito" 
+                         TextWrapping="Wrap"
+                         FontFamily="Consolas"/>
+            </ScrollViewer>
+        </Border>
+
+        <!-- Botones -->
+        <Border Grid.Row="2" 
+               Background="#F5F5F5" 
+               BorderBrush="#E0E0E0" 
+               BorderThickness="0,1,0,0" 
+               Padding="20,15">
+            <StackPanel Orientation="Horizontal" 
+                      HorizontalAlignment="Right">
+                <Button x:Name="btnImprimir" 
+                      Content="Imprimir" 
+                      Width="100" 
+                      Height="35"
+                      Margin="0,0,10,0"
+                      Background="#388E3C"
+                      Foreground="White"
+                      BorderThickness="0"
+                      Click="btnImprimir_Click"/>
+                <Button x:Name="btnCerrar" 
+                      Content="Cerrar" 
+                      Width="100" 
+                      Height="35"
+                      Background="#2E5D7D"
+                      Foreground="White"
+                      BorderThickness="0"
+                      Click="btnCerrar_Click"/>
+            </StackPanel>
+        </Border>
+    </Grid>
+</Window>

@@ -1,8 +1,11 @@
 ﻿using ElectroTech.Helpers;
 using ElectroTech.Models;
 using ElectroTech.Services;
+using ElectroTech.Views.Compras;
+using ElectroTech.Views.Devoluciones;
 using ElectroTech.Views.Empleados;
 using ElectroTech.Views.Productos;
+using ElectroTech.Views.Ventas;
 using System;
 using System.Windows;
 using System.Windows.Controls;
@@ -188,20 +191,17 @@ namespace ElectroTech.Views
 
         private void btnVentas_Click(object sender, RoutedEventArgs e)
         {
-            // TODO: Implementar página de ventas
-            MessageBox.Show("Funcionalidad en desarrollo", "Información", MessageBoxButton.OK, MessageBoxImage.Information);
+            mainFrame.Navigate(new VentasPage());
         }
 
         private void btnCompras_Click(object sender, RoutedEventArgs e)
         {
-            // TODO: Implementar página de compras
-            MessageBox.Show("Funcionalidad en desarrollo", "Información", MessageBoxButton.OK, MessageBoxImage.Information);
+            mainFrame.Navigate(new ComprasPage());
         }
 
         private void btnDevoluciones_Click(object sender, RoutedEventArgs e)
         {
-            // TODO: Implementar página de devoluciones
-            MessageBox.Show("Funcionalidad en desarrollo", "Información", MessageBoxButton.OK, MessageBoxImage.Information);
+            mainFrame.Navigate(new DevolucionesPage());
         }
 
         private void btnInventario_Click(object sender, RoutedEventArgs e)

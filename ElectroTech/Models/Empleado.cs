@@ -276,5 +276,6 @@ namespace ElectroTech.Models
         {
             return NombreCompleto;
         }
+
     }
 }

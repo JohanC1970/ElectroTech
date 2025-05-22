@@ -1,7 +1,7 @@
 ﻿<Application x:Class="ElectroTech.App"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:local="clr-namespace:ElectroTech">
+             xmlns:local="clr-namespace:ElectroTech" xmlns:local1="clr-namespace:ElectroTech.Helpers">
     <!-- Eliminamos el StartupUri para controlar la ventana inicial desde App.xaml.cs -->
     <Application.Resources>
         <ResourceDictionary>
@@ -28,10 +28,12 @@
             </Style>
 
             <!-- Value Converters -->
-            <local:BoolToSiNoConverter x:Key="BoolToSiNoConverter"/>
-            <local:BoolToColorConverter x:Key="BoolToColorConverter"/>
-            <local:BoolToEstadoConverter x:Key="BoolToEstadoConverter"/>
-
+            <local1:BoolToSiNoConverter x:Key="BoolToSiNoConverter"/>
+            <local1:BoolToColorConverter x:Key="BoolToColorConverter"/>
+            <local1:BoolToEstadoConverter x:Key="BoolToEstadoConverter"/>
+            <local1:BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
+            <local1:InverseBooleanToVisibilityConverter x:Key="InverseBooleanToVisibilityConverter"/>
+            
             <!-- Estilo para PasswordBox -->
             <Style TargetType="PasswordBox">
                 <Setter Property="Padding" Value="8,5"/>

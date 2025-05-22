@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
+using ElectroTech.Helpers;
 using ElectroTech.Models;
 
 namespace ElectroTech.DataAccess
@@ -21,41 +22,52 @@ namespace ElectroTech.DataAccess
         {
             try
             {
-                string query = @"SELECT idUsuario, nombreUsuario, nivel, nombreCompleto, correo, estado, 
-                                fechaCreacion, ultimaConexion 
-                                FROM Usuario 
-                                WHERE nombreUsuario = :nombreUsuario AND clave = :clave";
+                // Obtener todos los usuarios con el nombre de usuario proporcionado
+                string query = @"SELECT idUsuario, nombreUsuario, clave, nivel, nombreCompleto, correo, estado,   
+                               fechaCreacion, ultimaConexion   
+                         FROM Usuario   
+                         WHERE nombreUsuario = :nombreUsuario";
 
                 Dictionary<string, object> parameters = new Dictionary<string, object>
-                {
-                    { ":nombreUsuario", nombreUsuario },
-                    { ":clave", clave }
-                };
+        {
+            { ":nombreUsuario", nombreUsuario }
+        };
 
                 DataTable dataTable = ExecuteQuery(query, parameters);
 
                 if (dataTable.Rows.Count > 0)
                 {
-                    DataRow row = dataTable.Rows[0];
-                    Usuario usuario = new Usuario
+                    foreach (DataRow row in dataTable.Rows)
                     {
-                        IdUsuario = Convert.ToInt32(row["idUsuario"]),
-                        NombreUsuario = row["nombreUsuario"].ToString(),
-                        Nivel = Convert.ToInt32(row["nivel"]),
-                        NombreCompleto = row["nombreCompleto"].ToString(),
-                        Correo = row["correo"].ToString(),
-                        Estado = row["estado"].ToString()[0],
-                        FechaCreacion = Convert.ToDateTime(row["fechaCreacion"]),
-                        UltimaConexion = Convert.ToDateTime(row["ultimaConexion"])
-                    };
+                        // Imprimir las contraseñas
+                        Console.WriteLine($"Contraseña en base de datos: {row["clave"]}");
+                        Console.WriteLine($"Contraseña proporcionada: {clave}");
 
-                    // Registrar la entrada en la bitácora
-                    RegistrarAcceso(usuario.IdUsuario, 'E');
 
-                    // Actualizar la última conexión
-                    ActualizarUltimaConexion(usuario.IdUsuario);
+                        // Validar la contraseña
+                        if (PasswordValidator.VerifyPassword(clave, row["clave"].ToString()))
+                        {
+                            Usuario usuario = new Usuario
+                            {
+                                IdUsuario = Convert.ToInt32(row["idUsuario"]),
+                                NombreUsuario = row["nombreUsuario"].ToString(),
+                                Nivel = Convert.ToInt32(row["nivel"]),
+                                NombreCompleto = row["nombreCompleto"].ToString(),
+                                Correo = row["correo"].ToString(),
+                                Estado = row["estado"].ToString()[0],
+                                FechaCreacion = row["fechaCreacion"] != DBNull.Value ? Convert.ToDateTime(row["fechaCreacion"]) : DateTime.MinValue,
+                                UltimaConexion = row["ultimaConexion"] != DBNull.Value ? Convert.ToDateTime(row["ultimaConexion"]) : (DateTime?)null
+                            };
 
-                    return usuario;
+                            // Registrar la entrada en la bitácora
+                            RegistrarAcceso(usuario.IdUsuario, 'E');
+
+                            // Actualizar la última conexión
+                            ActualizarUltimaConexion(usuario.IdUsuario);
+
+                            return usuario;
+                        }
+                    }
                 }
 
                 return null;
@@ -69,6 +81,7 @@ namespace ElectroTech.DataAccess
                 CloseConnection();
             }
         }
+
 
         /// <summary>
         /// Registra el acceso de un usuario en la bitácora.
@@ -227,53 +240,87 @@ namespace ElectroTech.DataAccess
         }
 
         /// <summary>
-        /// Crea un nuevo usuario en el sistema.
+        /// Crea un nuevo usuario en la base de datos.
         /// </summary>
-        /// <param name="usuario">El usuario a crear.</param>
-        /// <returns>ID del usuario creado.</returns>
-        public int Crear(Usuario usuario)
+        /// <param name="usuario">Usuario a crear.</param>
+        /// <param name="hashContrasena">Hash de la contraseña.</param>
+        /// <param name="errorMessage">Mensaje de error si la creación falla.</param>
+        /// <returns>True si la creación es exitosa, False en caso contrario.</returns>
+        public bool Crear(Usuario usuario, string hashContrasena, out string errorMessage)
         {
+            errorMessage = string.Empty;
             try
             {
-                // Verificar si ya existe un administrador si el nuevo usuario es nivel 1
-                if (usuario.Nivel == 1 && ExisteAdministrador())
-                {
-                    throw new Exception("Solo puede existir un usuario administrador en el sistema.");
-                }
-
-                // Verificar si el nombre de usuario ya existe
-                if (ExisteNombreUsuario(usuario.NombreUsuario))
-                {
-                    throw new Exception("El nombre de usuario ya existe en el sistema.");
-                }
-
                 BeginTransaction();
 
+                // Verificar si ya existe el nombre de usuario
+                if (ExisteNombreUsuario(usuario.NombreUsuario))
+                {
+                    errorMessage = "El nombre de usuario ya existe.";
+                    RollbackTransaction();
+                    return false;
+                }
+
+                // Obtener el próximo ID de usuario
                 int idUsuario = GetNextSequenceValue("SEQ_USUARIO");
 
-                string query = @"INSERT INTO Usuario (idUsuario, nombreUsuario, clave, nivel, nombreCompleto, correo, estado, fechaCreacion) 
-                               VALUES (:idUsuario, :nombreUsuario, :clave, :nivel, :nombreCompleto, :correo, :estado, SYSDATE)";
+                string query = @"
+            INSERT INTO Usuario (
+                idUsuario, 
+                nombreUsuario, 
+                clave, 
+                nivel, 
+                nombreCompleto, 
+                correo, 
+                estado, 
+                fechaCreacion, 
+                ultimaConexion
+            ) VALUES (
+                :idUsuario, 
+                :nombreUsuario, 
+                :clave, 
+                :nivel, 
+                :nombreCompleto, 
+                :correo, 
+                :estado, 
+                :fechaCreacion, 
+                NULL
+            )";
 
                 Dictionary<string, object> parameters = new Dictionary<string, object>
+        {
+            { ":idUsuario", idUsuario },
+            { ":nombreUsuario", usuario.NombreUsuario },
+            { ":clave", hashContrasena },
+            { ":nivel", usuario.Nivel },
+            { ":nombreCompleto", usuario.NombreCompleto },
+            { ":correo", usuario.Correo },
+            { ":estado", usuario.Estado.ToString() },
+            { ":fechaCreacion", DateTime.Now }
+        };
+
+                int rowsAffected = ExecuteNonQuery(query, parameters);
+
+                if (rowsAffected > 0)
                 {
-                    { ":idUsuario", idUsuario },
-                    { ":nombreUsuario", usuario.NombreUsuario },
-                    { ":clave", usuario.Clave },
-                    { ":nivel", usuario.Nivel },
-                    { ":nombreCompleto", usuario.NombreCompleto },
-                    { ":correo", usuario.Correo },
-                    { ":estado", usuario.Estado.ToString() }
-                };
-
-                ExecuteNonQuery(query, parameters);
-                CommitTransaction();
-
-                return idUsuario;
+                    usuario.IdUsuario = idUsuario;
+                    usuario.FechaCreacion = DateTime.Now;
+                    CommitTransaction();
+                    return true;
+                }
+                else
+                {
+                    errorMessage = "No se pudo crear el usuario en la base de datos.";
+                    RollbackTransaction();
+                    return false;
+                }
             }
             catch (Exception ex)
             {
                 RollbackTransaction();
-                throw new Exception("Error al crear usuario.", ex);
+                errorMessage = ex.Message;
+                Logger.LogException(ex, $"Error al crear usuario {usuario.NombreUsuario}");
+                return false;
             }
             finally
             {
@@ -282,51 +329,159 @@ namespace ElectroTech.DataAccess
         }
 
         /// <summary>
-        /// Actualiza un usuario existente.
+        /// Actualiza un usuario existente sin cambiar su contraseña.
         /// </summary>
-        /// <param name="usuario">El usuario con los datos actualizados.</param>
+        /// <param name="usuario">Usuario con los datos actualizados.</param>
+        /// <param name="errorMessage">Mensaje de error si la actualización falla.</param>
         /// <returns>True si la actualización es exitosa, False en caso contrario.</returns>
-        public bool Actualizar(Usuario usuario)
+        public bool Actualizar(Usuario usuario, out string errorMessage)
         {
+            errorMessage = string.Empty;
             try
             {
-                // Verificar si ya existe un administrador si el usuario actualizado es nivel 1
-                if (usuario.Nivel == 1)
-                {
-                    int idAdmin = ObtenerIdAdministrador();
-                    if (idAdmin != -1 && idAdmin != usuario.IdUsuario)
-                    {
-                        throw new Exception("Solo puede existir un usuario administrador en el sistema.");
-                    }
-                }
-
                 BeginTransaction();
 
-                string query = @"UPDATE Usuario 
-                               SET nombreCompleto = :nombreCompleto, 
-                                   correo = :correo, 
-                                   nivel = :nivel, 
-                                   estado = :estado 
-                               WHERE idUsuario = :idUsuario";
+                // Verificar si el nombre de usuario ya existe para otro usuario
+                if (ExisteNombreUsuarioOtroUsuario(usuario.NombreUsuario, usuario.IdUsuario))
+                {
+                    errorMessage = "El nombre de usuario ya existe para otro usuario.";
+                    RollbackTransaction();
+                    return false;
+                }
+
+                string query = @"
+            UPDATE Usuario SET 
+                nombreUsuario = :nombreUsuario,
+                nivel = :nivel,
+                nombreCompleto = :nombreCompleto,
+                correo = :correo,
+                estado = :estado
+            WHERE idUsuario = :idUsuario";
 
                 Dictionary<string, object> parameters = new Dictionary<string, object>
-                {
-                    { ":nombreCompleto", usuario.NombreCompleto },
-                    { ":correo", usuario.Correo },
-                    { ":nivel", usuario.Nivel },
-                    { ":estado", usuario.Estado.ToString() },
-                    { ":idUsuario", usuario.IdUsuario }
-                };
+        {
+            { ":nombreUsuario", usuario.NombreUsuario },
+            { ":nivel", usuario.Nivel },
+            { ":nombreCompleto", usuario.NombreCompleto },
+            { ":correo", usuario.Correo },
+            { ":estado", usuario.Estado.ToString() },
+            { ":idUsuario", usuario.IdUsuario }
+        };
 
                 int rowsAffected = ExecuteNonQuery(query, parameters);
-                CommitTransaction();
 
-                return rowsAffected > 0;
+                if (rowsAffected > 0)
+                {
+                    CommitTransaction();
+                    return true;
+                }
+                else
+                {
+                    errorMessage = "No se encontró el usuario a actualizar.";
+                    RollbackTransaction();
+                    return false;
+                }
             }
             catch (Exception ex)
             {
                 RollbackTransaction();
-                throw new Exception("Error al actualizar usuario.", ex);
+                errorMessage = ex.Message;
+                Logger.LogException(ex, $"Error al actualizar usuario con ID {usuario.IdUsuario}");
+                return false;
+            }
+            finally
+            {
+                CloseConnection();
+            }
+        }
+
+        /// <summary>
+        /// Actualiza un usuario incluyendo su contraseña.
+        /// </summary>
+        /// <param name="usuario">Usuario con los datos actualizados.</param>
+        /// <param name="hashContrasena">Hash de la nueva contraseña.</param>
+        /// <param name="errorMessage">Mensaje de error si la actualización falla.</param>
+        /// <returns>True si la actualización es exitosa, False en caso contrario.</returns>
+        public bool ActualizarConContrasena(Usuario usuario, string hashContrasena, out string errorMessage)
+        {
+            errorMessage = string.Empty;
+            try
+            {
+                BeginTransaction();
+
+                string query = @"
+            UPDATE Usuario SET 
+                nombreUsuario = :nombreUsuario,
+                clave = :clave, 
+                nivel = :nivel,
+                nombreCompleto = :nombreCompleto,
+                correo = :correo,
+                estado = :estado
+            WHERE idUsuario = :idUsuario";
+
+                Dictionary<string, object> parameters = new Dictionary<string, object>
+        {
+            { ":nombreUsuario", usuario.NombreUsuario },
+            { ":clave", hashContrasena },
+            { ":nivel", usuario.Nivel },
+            { ":nombreCompleto", usuario.NombreCompleto },
+            { ":correo", usuario.Correo },
+            { ":estado", usuario.Estado.ToString() },
+            { ":idUsuario", usuario.IdUsuario }
+        };
+
+                int rowsAffected = ExecuteNonQuery(query, parameters);
+
+                if (rowsAffected > 0)
+                {
+                    CommitTransaction();
+                    return true;
+                }
+                else
+                {
+                    RollbackTransaction();
+                    errorMessage = "No se encontró el usuario a actualizar.";
+                    return false;
+                }
+            }
+            catch (Exception ex)
+            {
+                RollbackTransaction();
+                errorMessage = ex.Message;
+                Logger.LogException(ex, $"Error al actualizar usuario con ID {usuario.IdUsuario}");
+                return false;
+            }
+            finally
+            {
+                CloseConnection();
+            }
+        }
+
+        /// <summary>
+        /// Verifica si ya existe un nombre de usuario para otro usuario diferente.
+        /// </summary>
+        /// <param name="nombreUsuario">Nombre de usuario a verificar.</param>
+        /// <param name="idUsuarioActual">ID del usuario actual (para excluirlo de la verificación).</param>
+        /// <returns>True si el nombre de usuario ya existe para otro usuario, False en caso contrario.</returns>
+        public bool ExisteNombreUsuarioOtroUsuario(string nombreUsuario, int idUsuarioActual)
+        {
+            try
+            {
+                string query = "SELECT COUNT(*) FROM Usuario WHERE nombreUsuario = :nombreUsuario AND idUsuario <> :idUsuario";
+
+                Dictionary<string, object> parameters = new Dictionary<string, object>
+        {
+            { ":nombreUsuario", nombreUsuario },
+            { ":idUsuario", idUsuarioActual }
+        };
+
+                object result = ExecuteScalar(query, parameters);
+                return Convert.ToInt32(result) > 0;
+            }
+            catch (Exception ex)
+            {
+                Logger.LogException(ex, $"Error al verificar existencia de nombre de usuario '{nombreUsuario}' para otro usuario");
+                throw new Exception("Error al verificar existencia de nombre de usuario para otro usuario.", ex);
             }
             finally
             {

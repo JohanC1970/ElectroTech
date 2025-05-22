@@ -334,6 +334,30 @@ namespace ElectroTech.DataAccess
             }
         }
 
+        public bool DesasociarUsuario(int idEmpleado)
+        {
+            try
+            {
+                string query = "UPDATE Empleado SET idUsuario = NULL WHERE idEmpleado = :idEmpleado";
+                Dictionary<string, object> parameters = new Dictionary<string, object>
+                {
+                    { ":idEmpleado", idEmpleado },
+                    { ":idUsuario", DBNull.Value   }
+                };
+                int rowsAffected = ExecuteNonQuery(query, parameters);
+                return rowsAffected > 0;
+            }
+            catch (Exception ex)
+            {
+                Logger.LogException(ex, $"Error al desasociar usuario del empleado {idEmpleado}");
+                throw new Exception("Error al desasociar usuario del empleado.", ex);
+            }
+            finally
+            {
+                CloseConnection();
+            }
+        }
+
         /// <summary>
         /// Elimina un empleado (marcándolo como inactivo).
         /// </summary>

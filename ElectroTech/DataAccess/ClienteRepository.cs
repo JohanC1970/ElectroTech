@@ -88,6 +88,42 @@ namespace ElectroTech.DataAccess
         }
 
         /// <summary>
+        /// Obtiene todos los clientes activos.
+        /// </summary>
+        /// <returns>Lista de clientes activos.</returns>
+        public List<Cliente> ObtenerActivos()
+        {
+            try
+            {
+                string query = @"
+                    SELECT idCliente, tipoDocumento, numeroDocumento, nombre, apellido, 
+                           direccion, telefono, correo, fechaRegistro, activo
+                    FROM Cliente
+                    WHERE activo = 'S'
+                    ORDER BY nombre, apellido";
+
+                DataTable dataTable = ExecuteQuery(query);
+                List<Cliente> clientes = new List<Cliente>();
+
+                foreach (DataRow row in dataTable.Rows)
+                {
+                    clientes.Add(ConvertirDataRowACliente(row));
+                }
+
+                return clientes;
+            }
+            catch (Exception ex)
+            {
+                Logger.LogException(ex, "Error al obtener clientes activos");
+                throw new Exception("Error al obtener clientes activos.", ex);
+            }
+            finally
+            {
+                CloseConnection();
+            }
+        }
+
+        /// <summary>
         /// Busca clientes según un término de búsqueda.
         /// </summary>
         /// <param name="termino">Término de búsqueda.</param>

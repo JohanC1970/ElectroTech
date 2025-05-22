@@ -156,6 +156,14 @@ namespace ElectroTech.Models
         }
 
         /// <summary>
+        /// Propiedad calculada: Indica si la compra está pendiente.
+        /// </summary>
+        public bool EstadoPendiente
+        {
+            get { return Estado == 'P'; }
+        }
+
+        /// <summary>
         /// Observaciones o notas adicionales sobre la compra.
         /// </summary>
         public string Observaciones

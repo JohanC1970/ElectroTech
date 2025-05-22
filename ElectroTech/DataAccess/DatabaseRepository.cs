@@ -1,4 +1,5 @@
-﻿using Oracle.ManagedDataAccess.Client;
+﻿using ElectroTech.Helpers;
+using Oracle.ManagedDataAccess.Client;
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -181,15 +182,23 @@ namespace ElectroTech.DataAccess
         }
 
         /// <summary>
-        /// Obtiene el siguiente valor de una secuencia de Oracle.
+        /// Obtiene el siguiente valor de una secuencia.
         /// </summary>
-        /// <param name="sequenceName">El nombre de la secuencia.</param>
-        /// <returns>El próximo valor de la secuencia.</returns>
+        /// <param name="sequenceName">Nombre de la secuencia.</param>
+        /// <returns>Siguiente valor de la secuencia.</returns>
         protected int GetNextSequenceValue(string sequenceName)
         {
-            string query = $"SELECT {sequenceName}.NEXTVAL FROM DUAL";
-            object result = ExecuteScalar(query);
-            return Convert.ToInt32(result);
+            try
+            {
+                string query = $"SELECT {sequenceName}.NEXTVAL FROM DUAL";
+                object result = ExecuteScalar(query);
+                return Convert.ToInt32(result);
+            }
+            catch (Exception ex)
+            {
+                Logger.LogException(ex, $"Error al obtener el siguiente valor de la secuencia {sequenceName}");
+                throw new Exception($"Error al obtener el siguiente valor de la secuencia {sequenceName}.", ex);
+            }
         }
     }
 

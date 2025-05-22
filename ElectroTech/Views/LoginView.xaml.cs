@@ -1,4 +1,5 @@
-﻿using ElectroTech.Helpers;
+﻿using ElectroTech.DataAccess;
+using ElectroTech.Helpers;
 using ElectroTech.Models;
 using ElectroTech.Services;
 using System;
@@ -23,6 +24,11 @@ namespace ElectroTech.Views
             InitializeComponent();
             _authService = new AuthService();
             txtUsuario.Focus();
+
+            
+
+
+
         }
 
         /// <summary>
@@ -60,10 +66,19 @@ namespace ElectroTech.Views
                     Logger.LogInfo($"Usuario {nombreUsuario} ha iniciado sesión exitosamente.");
 
                     // Cargar y mostrar la ventana principal
-                    var mainWindow = new MainWindow();
-                    Application.Current.MainWindow = mainWindow;
-                    mainWindow.Show();
+
+                    var MainDashboardWindow = new MainDashboardWindow();
+                    MainDashboardWindow.Owner = this;
+                    MainDashboardWindow.WindowStartupLocation = WindowStartupLocation.CenterOwner;
+                    MainDashboardWindow.ShowDialog();
+                    // Cerrar la ventana de login
+                    //this.Hide();
                     this.Close();
+
+                    //var mainWindow = new MainWindow();
+                    //Application.Current.MainWindow = mainWindow;
+                    //mainWindow.Show();
+                    //this.Close();
                 }
                 else
                 {

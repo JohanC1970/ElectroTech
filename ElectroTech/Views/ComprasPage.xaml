@@ -1,0 +1,140 @@
+﻿<Page x:Class="ElectroTech.Views.Compras.ComprasPage"
+      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+      xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+      xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+      xmlns:local="clr-namespace:ElectroTech.Views.Compras"
+      mc:Ignorable="d" 
+      d:DesignHeight="600" d:DesignWidth="900"
+      Title="Compras">
+
+    <Grid Margin="20">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- Encabezado -->
+        <StackPanel Grid.Row="0">
+            <TextBlock Text="Gestión de Compras" 
+                     FontSize="28" 
+                     FontWeight="SemiBold" 
+                     Foreground="#2E5D7D"/>
+            <TextBlock Text="Administre las órdenes de compra a proveedores" 
+                     FontSize="16" 
+                     Foreground="#555555" 
+                     Margin="0,5,0,20"/>
+        </StackPanel>
+
+        <!-- Barra de búsqueda y filtros -->
+        <Grid Grid.Row="1" Margin="0,0,0,15">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+
+            <!-- Búsqueda -->
+            <TextBox x:Name="txtBuscar" 
+                   Grid.Column="0" 
+                   Margin="0,0,10,0"
+                   Padding="10,8"
+                   FontSize="14"
+                   VerticalContentAlignment="Center"
+                   KeyDown="txtBuscar_KeyDown"
+                   ToolTip="Ingrese número de orden o proveedor para buscar"/>
+
+            <!-- Filtro por estado -->
+            <ComboBox x:Name="cmbEstado" 
+                    Grid.Column="1"
+                    Width="200"
+                    Margin="5,0"
+                    Padding="10,8"
+                    FontSize="14"
+                    VerticalContentAlignment="Center"
+                    SelectionChanged="cmbEstado_SelectionChanged"
+                    ToolTip="Filtrar por estado de la orden">
+                <ComboBoxItem Content="Todos los estados" Tag=""/>
+                <ComboBoxItem Content="Pendientes" Tag="P"/>
+                <ComboBoxItem Content="Recibidas" Tag="R"/>
+                <ComboBoxItem Content="Canceladas" Tag="C"/>
+            </ComboBox>
+
+            <!-- Botón de buscar -->
+            <Button x:Name="btnBuscar" 
+                  Grid.Column="2"
+                  Content="Buscar" 
+                  Margin="5,0" 
+                  Padding="15,8"
+                  FontSize="14"
+                  Click="btnBuscar_Click"/>
+
+            <!-- Botón de nueva compra -->
+            <Button x:Name="btnNuevaCompra" 
+                  Grid.Column="3"
+                  Content="Nueva Compra" 
+                  Margin="5,0,0,0" 
+                  Padding="15,8"
+                  FontSize="14"
+                  Click="btnNuevaCompra_Click"/>
+        </Grid>
+
+        <!-- Lista de compras -->
+        <DataGrid x:Name="dgCompras" 
+                Grid.Row="2"
+                AutoGenerateColumns="False"
+                IsReadOnly="True"
+                SelectionMode="Single"
+                SelectionChanged="dgCompras_SelectionChanged"
+                BorderBrush="#DDDDDD"
+                BorderThickness="1"
+                RowBackground="White"
+                AlternatingRowBackground="#F8F8F8"
+                HeadersVisibility="Column"
+                GridLinesVisibility="Horizontal"
+                HorizontalGridLinesBrush="#EEEEEE"
+                CanUserSortColumns="True"
+                CanUserResizeColumns="True">
+            <DataGrid.Columns>
+                <DataGridTextColumn Header="N° Orden" Binding="{Binding NumeroOrden}" Width="100"/>
+                <DataGridTextColumn Header="Fecha" Binding="{Binding Fecha, StringFormat=dd/MM/yyyy}" Width="100"/>
+                <DataGridTextColumn Header="Proveedor" Binding="{Binding Proveedor.Nombre}" Width="180"/>
+                <DataGridTextColumn Header="Subtotal" Binding="{Binding Subtotal, StringFormat=C}" Width="120"/>
+                <DataGridTextColumn Header="Impuestos" Binding="{Binding Impuestos, StringFormat=C}" Width="120"/>
+                <DataGridTextColumn Header="Total" Binding="{Binding Total, StringFormat=C}" Width="120"/>
+                <DataGridTextColumn Header="Estado" Binding="{Binding EstadoDescripcion}" Width="100"/>
+                <DataGridTemplateColumn Header="Acciones" Width="150">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                                <Button Content="Ver" 
+                                      Margin="2" 
+                                      Padding="8,3"
+                                      Click="btnVerCompra_Click"/>
+                                <Button Content="Editar" 
+                                      Margin="2" 
+                                      Padding="8,3"
+                                      Click="btnEditarCompra_Click"
+                                      Visibility="{Binding EstadoPendiente, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+                            </StackPanel>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+            </DataGrid.Columns>
+        </DataGrid>
+
+        <!-- Información de paginación -->
+        <StackPanel Grid.Row="3" 
+                  Orientation="Horizontal" 
+                  HorizontalAlignment="Right" 
+                  Margin="0,10,0,0">
+            <TextBlock x:Name="txtTotalCompras" 
+                     Text="Total: 0 órdenes de compra" 
+                     VerticalAlignment="Center" 
+                     Margin="0,0,20,0"/>
+        </StackPanel>
+    </Grid>
+</Page>

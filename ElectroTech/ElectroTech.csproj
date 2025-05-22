@@ -44,6 +44,7 @@
     <Reference Include="Oracle.ManagedDataAccess, Version=4.122.23.1, Culture=neutral, PublicKeyToken=89b483f429c47342, processorArchitecture=MSIL">
       <HintPath>..\packages\Oracle.ManagedDataAccess.23.8.0\lib\net472\Oracle.ManagedDataAccess.dll</HintPath>
     </Reference>
+    <Reference Include="ReachFramework" />
     <Reference Include="System" />
     <Reference Include="System.Buffers, Version=4.0.4.0, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
       <HintPath>..\packages\System.Buffers.4.6.0\lib\net462\System.Buffers.dll</HintPath>
@@ -75,6 +76,7 @@
     <Reference Include="System.Threading.Tasks.Extensions, Version=4.2.1.0, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
       <HintPath>..\packages\System.Threading.Tasks.Extensions.4.6.0\lib\net462\System.Threading.Tasks.Extensions.dll</HintPath>
     </Reference>
+    <Reference Include="System.Transactions" />
     <Reference Include="System.ValueTuple, Version=4.0.3.0, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
       <HintPath>..\packages\System.ValueTuple.4.5.0\lib\net47\System.ValueTuple.dll</HintPath>
     </Reference>
@@ -98,10 +100,16 @@
     </ApplicationDefinition>
     <Compile Include="DataAccess\CategoriaRepository.cs" />
     <Compile Include="DataAccess\ClienteRepository.cs" />
+    <Compile Include="DataAccess\CompraRepository.cs" />
     <Compile Include="DataAccess\DatabaseInitializer.cs" />
+    <Compile Include="DataAccess\DevolucionRepository.cs" />
     <Compile Include="DataAccess\EmpleadoRepository.cs" />
+    <Compile Include="DataAccess\InventarioRepository.cs" />
+    <Compile Include="DataAccess\MetodoPagoRepository.cs" />
     <Compile Include="DataAccess\ProductoRepository.cs" />
     <Compile Include="DataAccess\ProveedorRepository.cs" />
+    <Compile Include="DataAccess\VentaRepository.cs" />
+    <Compile Include="Helpers\BooleanToVisibilityConverter.cs" />
     <Compile Include="Helpers\BoolToColorConverter.cs" />
     <Compile Include="Helpers\BoolToEstadoConverter.cs" />
     <Compile Include="Helpers\BoolToSiNoConverter.cs" />
@@ -112,11 +120,18 @@
     <Compile Include="Services\AuthService.cs" />
     <Compile Include="Services\CategoriaService.cs" />
     <Compile Include="Services\ClienteService.cs" />
+    <Compile Include="Services\CompraService.cs" />
+    <Compile Include="Services\DevolucionService.cs" />
     <Compile Include="Services\ElectroTechMailService.cs" />
     <Compile Include="Services\EmpleadoService.cs" />
     <Compile Include="Services\MailService.cs" />
+    <Compile Include="Services\MetodoPagoService.cs" />
     <Compile Include="Services\ProductoService.cs" />
     <Compile Include="Services\ProveedorService.cs" />
+    <Compile Include="Services\VentaService.cs" />
+    <Compile Include="Views\BusquedaVentaWindow.xaml.cs">
+      <DependentUpon>BusquedaVentaWindow.xaml</DependentUpon>
+    </Compile>
     <Compile Include="Views\CategoriaDetailWindow.xaml.cs">
       <DependentUpon>CategoriaDetailWindow.xaml</DependentUpon>
     </Compile>
@@ -129,14 +144,29 @@
     <Compile Include="Views\ClientesPage.xaml.cs">
       <DependentUpon>ClientesPage.xaml</DependentUpon>
     </Compile>
+    <Compile Include="Views\CompraDetalleWindow.xaml.cs">
+      <DependentUpon>CompraDetalleWindow.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Views\ComprasPage.xaml.cs">
+      <DependentUpon>ComprasPage.xaml</DependentUpon>
+    </Compile>
     <Compile Include="Views\DashboardPage.xaml.cs">
       <DependentUpon>DashboardPage.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Views\DevolucionDetailWindow.xaml.cs">
+      <DependentUpon>DevolucionDetailWindow.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Views\DevolucionesPage.xaml.cs">
+      <DependentUpon>DevolucionesPage.xaml</DependentUpon>
     </Compile>
     <Compile Include="Views\EmpleadoDetalleWindow.xaml.cs">
       <DependentUpon>EmpleadoDetalleWindow.xaml</DependentUpon>
     </Compile>
     <Compile Include="Views\EmpleadosPage.xaml.cs">
       <DependentUpon>EmpleadosPage.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Views\FacturaView.xaml.cs">
+      <DependentUpon>FacturaView.xaml</DependentUpon>
     </Compile>
     <Compile Include="Views\InventarioPage.xaml.cs">
       <DependentUpon>InventarioPage.xaml</DependentUpon>
@@ -146,6 +176,9 @@
     </Compile>
     <Compile Include="Views\MainDashboardWindow.xaml.cs">
       <DependentUpon>MainDashboardWindow.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Views\NotaCreditoWindow.xaml.cs">
+      <DependentUpon>NotaCreditoWindow.xaml</DependentUpon>
     </Compile>
     <Compile Include="Views\ProductoDetailWindow.xaml.cs">
       <DependentUpon>ProductoDetailWindow.xaml</DependentUpon>
@@ -161,6 +194,12 @@
     </Compile>
     <Compile Include="Views\RecuperarContrasena.xaml.cs">
       <DependentUpon>RecuperarContrasena.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Views\VentaDetailWindow.xaml.cs">
+      <DependentUpon>VentaDetailWindow.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Views\VentasPage.xaml.cs">
+      <DependentUpon>VentasPage.xaml</DependentUpon>
     </Compile>
     <Page Include="MainWindow.xaml">
       <Generator>MSBuild:Compile</Generator>
@@ -179,6 +218,10 @@
       <DependentUpon>MainWindow.xaml</DependentUpon>
       <SubType>Code</SubType>
     </Compile>
+    <Page Include="Views\BusquedaVentaWindow.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
     <Page Include="Views\CategoriaDetailWindow.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
@@ -195,7 +238,23 @@
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
+    <Page Include="Views\CompraDetalleWindow.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Views\ComprasPage.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
     <Page Include="Views\DashboardPage.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Views\DevolucionDetailWindow.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Views\DevolucionesPage.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
@@ -204,6 +263,10 @@
       <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Include="Views\EmpleadosPage.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Views\FacturaView.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
@@ -220,6 +283,10 @@
       <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Include="Views\MenuButtonStyle.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Views\NotaCreditoWindow.xaml">
+      <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Include="Views\ProductoDetailWindow.xaml">
@@ -239,6 +306,14 @@
       <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Include="Views\RecuperarContrasena.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Views\VentaDetailWindow.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Views\VentasPage.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>

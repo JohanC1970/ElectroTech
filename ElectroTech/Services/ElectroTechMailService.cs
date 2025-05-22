@@ -9,8 +9,8 @@ namespace ElectroTech.Services
         public ElectroTechMailService()
         {
             // Configuración para Gmail
-            SenderMail = "agenciaturisticasoftware2025@gmail.com"; // Reemplazar con el correo real
-            Password = "ziac htmc lyhk vjpi"; // Reemplazar con la contraseña real
+            SenderMail = "garciacami728@gmail.com"; 
+            Password = "fytt qdpa esoh viqk"; 
             Host = "smtp.gmail.com";
             Port = 587;
             ssl = true;
