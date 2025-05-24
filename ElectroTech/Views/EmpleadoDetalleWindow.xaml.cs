@@ -2,10 +2,12 @@
 using ElectroTech.Models;
 using ElectroTech.Services;
 using System;
+using System.Globalization;
+using System.Linq;
 using System.Text.RegularExpressions;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Input;
+using static ElectroTech.Helpers.PermisosHelper;
 
 namespace ElectroTech.Views.Empleados
 {
@@ -16,11 +18,11 @@ namespace ElectroTech.Views.Empleados
     {
         private readonly EmpleadoService _empleadoService;
         private readonly AuthService _authService;
-        private readonly Empleado _empleado;
-        private readonly bool _esNuevo;
+        private Empleado _empleadoActual;
+        private bool _esEdicion;
 
         /// <summary>
-        /// Constructor para un nuevo empleado
+        /// Constructor para crear un nuevo empleado
         /// </summary>
         public EmpleadoDetailWindow()
         {
@@ -28,114 +30,111 @@ namespace ElectroTech.Views.Empleados
 
             _empleadoService = new EmpleadoService();
             _authService = new AuthService();
-            _empleado = new Empleado();
-            _esNuevo = true;
+            _empleadoActual = new Empleado();
+            _esEdicion = false;
 
-            // Configurar ventana para nuevo empleado
-            txtTitulo.Text = "Nuevo Empleado";
-            ConfigurarVentana();
+            ConfigurarFormulario();
+            ConfigurarEventos();
         }
 
         /// <summary>
         /// Constructor para editar un empleado existente
         /// </summary>
+        /// <param name="empleado">Empleado a editar</param>
         public EmpleadoDetailWindow(Empleado empleado)
         {
             InitializeComponent();
 
             _empleadoService = new EmpleadoService();
             _authService = new AuthService();
-            _empleado = empleado;
-            _esNuevo = false;
+            _empleadoActual = empleado;
+            _esEdicion = true;
 
-            // Configurar ventana para edición
-            txtTitulo.Text = "Editar Empleado";
-            pnlCamposEdicion.Visibility = Visibility.Visible;
-
-            ConfigurarVentana();
+            ConfigurarFormulario();
+            ConfigurarEventos();
             CargarDatosEmpleado();
         }
 
         /// <summary>
-        /// Configura la ventana y carga datos iniciales
+        /// Configura el formulario inicial
         /// </summary>
-        private void ConfigurarVentana()
+        private void ConfigurarFormulario()
         {
-            try
+            if (_esEdicion)
             {
-                // Configurar fecha actual en el DatePicker
+                txtTitulo.Text = "Editar Empleado";
+                chkCrearUsuario.Content = "Gestionar usuario del sistema";
+                chkCrearUsuario.ToolTip = "Marque esta opción para crear o actualizar el usuario asociado";
+                txtPassword.Visibility = Visibility.Collapsed;
+                
+                var lblPassword = FindName("lblPassword") as FrameworkElement;
+                lblPassword?.SetValue(VisibilityProperty, Visibility.Collapsed);
+
+            }
+            else
+            {
+                txtTitulo.Text = "Nuevo Empleado";
                 dpFechaContratacion.SelectedDate = DateTime.Now;
-
-                // Seleccionar el primer tipo de documento
-                cmbTipoDocumento.SelectedIndex = 0;
-
-                // Seleccionar nivel de usuario por defecto (Paramétrico)
-                cmbNivelUsuario.SelectedIndex = 1; // Paramétrico por defecto para empleados normales
-
-                // En modo nuevo, marcar como activo por defecto
-                if (_esNuevo)
-                {
-                    chkActivo.IsChecked = true;
-                }
+                chkCrearUsuario.IsChecked = true;
+                chkCrearUsuario.IsEnabled = false;
             }
-            catch (Exception ex)
-            {
-                Logger.LogException(ex, "Error al configurar ventana de empleado");
-                MessageBox.Show("Error al configurar la ventana: " + ex.Message,
-                    "Error", MessageBoxButton.OK, MessageBoxImage.Error);
-            }
+
+            // Enfocar el primer campo
+            txtNombre.Focus();
         }
 
         /// <summary>
-        /// Carga los datos del empleado en el formulario (modo edición)
+        /// Configura los eventos adicionales
+        /// </summary>
+        private void ConfigurarEventos()
+        {
+            // Evento para generar nombre de usuario automáticamente
+            txtNombre.LostFocus += GenerarNombreUsuarioAutomatico;
+            txtApellido.LostFocus += GenerarNombreUsuarioAutomatico;
+
+            // Validación numérica para salario
+            txtSalarioBase.PreviewTextInput += ValidarEntradaNumerica;
+
+            // Validación numérica para documento
+            txtNumeroDocumento.PreviewTextInput += ValidarEntradaNumerica;
+        }
+
+        /// <summary>
+        /// Carga los datos del empleado en modo edición
         /// </summary>
         private void CargarDatosEmpleado()
         {
+            if (_empleadoActual == null) return;
+
             try
             {
-                // Cargar datos básicos
-                txtNombre.Text = _empleado.Nombre;
-                txtApellido.Text = _empleado.Apellido;
-                txtDireccion.Text = _empleado.Direccion;
-                txtTelefono.Text = _empleado.Telefono;
-                txtNumeroDocumento.Text = _empleado.NumeroDocumento;
-                dpFechaContratacion.SelectedDate = _empleado.FechaContratacion;
-                txtSalarioBase.Text = _empleado.SalarioBase.ToString("0.00");
+                // Datos personales
+                txtNombre.Text = _empleadoActual.Nombre;
+                txtApellido.Text = _empleadoActual.Apellido;
+                txtNumeroDocumento.Text = _empleadoActual.NumeroDocumento;
+                txtDireccion.Text = _empleadoActual.Direccion;
+                txtTelefono.Text = _empleadoActual.Telefono;
 
                 // Seleccionar tipo de documento
-                for (int i = 0; i < cmbTipoDocumento.Items.Count; i++)
+                foreach (ComboBoxItem item in cmbTipoDocumento.Items)
                 {
-                    ComboBoxItem item = cmbTipoDocumento.Items[i] as ComboBoxItem;
-                    if (item.Content.ToString() == _empleado.TipoDocumento)
+                    if (item.Content.ToString() == _empleadoActual.TipoDocumento)
                     {
-                        cmbTipoDocumento.SelectedIndex = i;
+                        cmbTipoDocumento.SelectedItem = item;
                         break;
                     }
                 }
 
-                // Estado
-                chkActivo.IsChecked = _empleado.Activo;
+                // Datos laborales
+                dpFechaContratacion.SelectedDate = _empleadoActual.FechaContratacion;
+                txtSalarioBase.Text = _empleadoActual.SalarioBase.ToString("F2");
+                chkActivo.IsChecked = _empleadoActual.Activo;
 
-                // Verificar si tiene usuario asociado
-                if (_empleado.IdUsuario > 0)
+                // Si tiene usuario asociado, mostrar la opción
+                if (_empleadoActual.IdUsuario > 0)
                 {
-                    var usuario = _authService.ObtenerPorId(_empleado.IdUsuario);
-                    if (usuario != null)
-                    {
-                        chkAsociarUsuario.IsChecked = true;
-                        txtUsuario.Text = usuario.NombreUsuario;
-
-                        // Seleccionar el nivel de usuario correcto
-                        for (int i = 0; i < cmbNivelUsuario.Items.Count; i++)
-                        {
-                            ComboBoxItem item = cmbNivelUsuario.Items[i] as ComboBoxItem;
-                            if (Convert.ToInt32(item.Tag) == usuario.Nivel)
-                            {
-                                cmbNivelUsuario.SelectedIndex = i;
-                                break;
-                            }
-                        }
-                    }
+                    chkCrearUsuario.IsChecked = true;
+                    CargarDatosUsuario();
                 }
             }
             catch (Exception ex)
@@ -147,345 +146,364 @@ namespace ElectroTech.Views.Empleados
         }
 
         /// <summary>
-        /// Valida y guarda el empleado
+        /// Carga los datos del usuario asociado (en modo edición)
         /// </summary>
-        private void GuardarEmpleado()
+        private void CargarDatosUsuario()
         {
             try
             {
-                // Ocultar mensaje de error previo
-                OcultarError();
-
-                // Validar campos obligatorios
-                if (!ValidarCamposObligatorios())
+                if (_empleadoActual.IdUsuario > 0)
                 {
-                    return;
-                }
-
-                // Validar campos de usuario si está marcado
-                if (chkAsociarUsuario.IsChecked == true)
-                {
-                    if (!ValidarCamposUsuario())
+                    var usuario = _authService.ObtenerPorId(_empleadoActual.IdUsuario);
+                    if (usuario != null)
                     {
-                        return;
+                        txtNombreUsuario.Text = usuario.NombreUsuario;
+                        txtCorreoUsuario.Text = usuario.Correo;
+
+                        // Seleccionar nivel de usuario
+                        foreach (ComboBoxItem item in cmbNivelUsuario.Items)
+                        {
+                            if (Convert.ToInt32(item.Tag) == usuario.Nivel)
+                            {
+                                cmbNivelUsuario.SelectedItem = item;
+                                break;
+                            }
+                        }
+
+                        // Seleccionar estado de usuario
+                        foreach (ComboBoxItem item in cmbEstadoUsuario.Items)
+                        {
+                            if (item.Tag.ToString() == usuario.Estado.ToString())
+                            {
+                                cmbEstadoUsuario.SelectedItem = item;
+                                break;
+                            }
+                        }
                     }
-                }
-
-                // Parsear valores numéricos
-                if (!double.TryParse(txtSalarioBase.Text, out double salarioBase) || salarioBase <= 0)
-                {
-                    MostrarError("El salario base debe ser un número mayor que cero.");
-                    return;
-                }
-
-                // Completar datos del empleado
-                _empleado.Nombre = txtNombre.Text.Trim();
-                _empleado.Apellido = txtApellido.Text.Trim();
-                _empleado.TipoDocumento = ((ComboBoxItem)cmbTipoDocumento.SelectedItem).Content.ToString();
-                _empleado.NumeroDocumento = txtNumeroDocumento.Text.Trim();
-                _empleado.Direccion = string.IsNullOrWhiteSpace(txtDireccion.Text) ? null : txtDireccion.Text.Trim();
-                _empleado.Telefono = txtTelefono.Text.Trim();
-                _empleado.FechaContratacion = dpFechaContratacion.SelectedDate.Value;
-                _empleado.SalarioBase = salarioBase;
-                _empleado.Activo = chkActivo.IsChecked ?? true;
-
-                // Datos de usuario si se va a crear/actualizar
-                string nombreUsuario = null;
-                int nivelUsuario = 0;
-
-                if (chkAsociarUsuario.IsChecked == true)
-                {
-                    nombreUsuario = txtUsuario.Text.Trim();
-                    nivelUsuario = Convert.ToInt32(((ComboBoxItem)cmbNivelUsuario.SelectedItem).Tag);
-                }
-
-                // Guardar empleado
-                string errorMessage;
-                bool resultado;
-
-                if (_esNuevo)
-                {
-                    resultado = _empleadoService.CrearEmpleado(_empleado, nombreUsuario, nivelUsuario, out errorMessage);
-                }
-                else
-                {
-                    resultado = _empleadoService.ActualizarEmpleado(_empleado, nombreUsuario, nivelUsuario, out errorMessage);
-                }
-
-                // Verificar resultado
-                if (resultado)
-                {
-                    string mensaje = $"Empleado {(_esNuevo ? "creado" : "actualizado")} con éxito.";
-
-                    // Si se creó un usuario, agregar información adicional
-                    if (chkAsociarUsuario.IsChecked == true && _esNuevo)
-                    {
-                        // Generar contraseña temporal para mostrar al usuario
-                        string claveInicial = GenerarClaveInicial(nombreUsuario, _empleado.NumeroDocumento);
-                        mensaje += $"\n\nCredenciales de acceso:\nUsuario: {nombreUsuario}\nContraseña temporal: {claveInicial}";
-                        mensaje += "\n\nPor favor, anote estas credenciales. Se recomienda cambiar la contraseña en el primer acceso.";
-                    }
-
-                    MessageBox.Show(mensaje, "Información", MessageBoxButton.OK, MessageBoxImage.Information);
-
-                    // Cerrar ventana con resultado positivo
-                    DialogResult = true;
-                    Close();
-                }
-                else
-                {
-                    MostrarError($"Error al {(_esNuevo ? "crear" : "actualizar")} el empleado: {errorMessage}");
                 }
             }
             catch (Exception ex)
             {
-                Logger.LogException(ex, $"Error al guardar empleado {(_esNuevo ? "nuevo" : "existente")}");
-                MostrarError("Error al guardar el empleado: " + ex.Message);
+                Logger.LogException(ex, "Error al cargar datos del usuario");
             }
         }
 
         /// <summary>
-        /// Valida los campos obligatorios del empleado
+        /// Genera automáticamente un nombre de usuario basado en nombre y apellido
         /// </summary>
-        private bool ValidarCamposObligatorios()
+        private void GenerarNombreUsuarioAutomatico(object sender, RoutedEventArgs e)
         {
-            if (string.IsNullOrWhiteSpace(txtNombre.Text))
+            if (chkCrearUsuario.IsChecked == true && string.IsNullOrWhiteSpace(txtNombreUsuario.Text))
             {
-                MostrarError("El nombre del empleado es obligatorio.");
-                txtNombre.Focus();
-                return false;
-            }
+                string nombre = txtNombre.Text.Trim();
+                string apellido = txtApellido.Text.Trim();
 
-            if (string.IsNullOrWhiteSpace(txtApellido.Text))
-            {
-                MostrarError("El apellido del empleado es obligatorio.");
-                txtApellido.Focus();
-                return false;
-            }
-
-            if (cmbTipoDocumento.SelectedItem == null)
-            {
-                MostrarError("Debe seleccionar un tipo de documento.");
-                cmbTipoDocumento.Focus();
-                return false;
-            }
-
-            if (string.IsNullOrWhiteSpace(txtNumeroDocumento.Text))
-            {
-                MostrarError("El número de documento es obligatorio.");
-                txtNumeroDocumento.Focus();
-                return false;
-            }
-
-            if (string.IsNullOrWhiteSpace(txtTelefono.Text))
-            {
-                MostrarError("El teléfono del empleado es obligatorio.");
-                txtTelefono.Focus();
-                return false;
-            }
-
-            if (dpFechaContratacion.SelectedDate == null)
-            {
-                MostrarError("La fecha de contratación es obligatoria.");
-                dpFechaContratacion.Focus();
-                return false;
-            }
-
-            if (string.IsNullOrWhiteSpace(txtSalarioBase.Text))
-            {
-                MostrarError("El salario base es obligatorio.");
-                txtSalarioBase.Focus();
-                return false;
-            }
-
-            return true;
-        }
-
-        /// <summary>
-        /// Valida los campos del usuario si se va a crear/actualizar
-        /// </summary>
-        private bool ValidarCamposUsuario()
-        {
-            if (string.IsNullOrWhiteSpace(txtUsuario.Text))
-            {
-                MostrarError("Si va a asociar un usuario, debe ingresar un nombre de usuario.");
-                txtUsuario.Focus();
-                return false;
-            }
-
-            if (cmbNivelUsuario.SelectedItem == null)
-            {
-                MostrarError("Si va a asociar un usuario, debe seleccionar un nivel de usuario.");
-                cmbNivelUsuario.Focus();
-                return false;
-            }
-
-            // Validar que el nombre de usuario no exista (solo en modo nuevo o si cambió el nombre)
-            if (_esNuevo)
-            {
-                if (_authService.ExisteNombreUsuario(txtUsuario.Text.Trim()))
+                if (!string.IsNullOrEmpty(nombre) && !string.IsNullOrEmpty(apellido))
                 {
-                    MostrarError("El nombre de usuario ya existe, por favor elija otro.");
-                    txtUsuario.Focus();
+                    // Generar nombre de usuario: primera letra del nombre + apellido
+                    string nombreUsuario = (nombre.Substring(0, 1) + apellido).ToLower();
+
+                    // Limpiar caracteres especiales
+                    nombreUsuario = Regex.Replace(nombreUsuario, @"[^a-z0-9]", "");
+
+                    txtNombreUsuario.Text = nombreUsuario;
+                }
+            }
+
+        }
+
+        /// <summary>
+        /// Valida que solo se ingresen números en campos numéricos
+        /// </summary>
+        private void ValidarEntradaNumerica(object sender, System.Windows.Input.TextCompositionEventArgs e)
+        {
+            TextBox textBox = sender as TextBox;
+
+            if (textBox == txtSalarioBase)
+            {
+                // Permitir números y punto decimal
+                e.Handled = !Regex.IsMatch(e.Text, @"^[0-9.]+$") ||
+                           (e.Text == "." && textBox.Text.Contains("."));
+            }
+            else
+            {
+                // Solo números
+                e.Handled = !Regex.IsMatch(e.Text, @"^[0-9]+$");
+            }
+        }
+
+        /// <summary>
+        /// Evento del checkbox para crear usuario
+        /// </summary>
+        private void chkCrearUsuario_Checked(object sender, RoutedEventArgs e)
+        {
+            GenerarNombreUsuarioAutomatico(sender, e);
+        }
+
+        /// <summary>
+        /// Evento del checkbox para no crear usuario
+        /// </summary>
+        private void chkCrearUsuario_Unchecked(object sender, RoutedEventArgs e)
+        {
+            txtNombreUsuario.Clear();
+            txtCorreoUsuario.Clear();
+            cmbNivelUsuario.SelectedIndex = 1; // Paramétrico por defecto
+            cmbEstadoUsuario.SelectedIndex = 0; // Activo por defecto
+        }
+
+        /// <summary>
+        /// Valida los datos del formulario
+        /// </summary>
+        /// <returns>True si los datos son válidos, False en caso contrario</returns>
+        private bool ValidarFormulario()
+        {
+            // Validaciones de Empleado (sin cambios)
+            if (string.IsNullOrWhiteSpace(txtNombre.Text)) { MessageBox.Show("El nombre es obligatorio."); txtNombre.Focus(); return false; }
+            if (string.IsNullOrWhiteSpace(txtApellido.Text)) { MessageBox.Show("El apellido es obligatorio."); txtApellido.Focus(); return false; }
+            if (string.IsNullOrWhiteSpace(txtNumeroDocumento.Text)) { MessageBox.Show("El documento es obligatorio."); txtNumeroDocumento.Focus(); return false; }
+            if (string.IsNullOrWhiteSpace(txtTelefono.Text)) { MessageBox.Show("El teléfono es obligatorio."); txtTelefono.Focus(); return false; }
+            if (!dpFechaContratacion.SelectedDate.HasValue) { MessageBox.Show("La fecha de contratación es obligatoria."); dpFechaContratacion.Focus(); return false; }
+            if (dpFechaContratacion.SelectedDate.Value > DateTime.Now) { MessageBox.Show("La fecha de contratación no puede ser futura."); dpFechaContratacion.Focus(); return false; }
+            if (!double.TryParse(txtSalarioBase.Text, NumberStyles.Any, CultureInfo.CurrentCulture, out double salario) || salario <= 0) { MessageBox.Show("El salario base debe ser un número mayor que cero."); txtSalarioBase.Focus(); return false; }
+
+            // Validaciones de Usuario (si está marcado)
+            if (chkCrearUsuario.IsChecked == true)
+            {
+                if (string.IsNullOrWhiteSpace(txtNombreUsuario.Text)) { MessageBox.Show("El nombre de usuario es obligatorio."); txtNombreUsuario.Focus(); return false; }
+                if (txtNombreUsuario.Text.Length < 3) { MessageBox.Show("El nombre de usuario debe tener al menos 3 caracteres."); txtNombreUsuario.Focus(); return false; }
+                if (!Regex.IsMatch(txtNombreUsuario.Text, @"^[a-zA-Z0-9_]+$")) { MessageBox.Show("El nombre de usuario solo puede contener letras, números y guiones bajos."); txtNombreUsuario.Focus(); return false; }
+                if (char.IsDigit(txtNombreUsuario.Text[0])) { MessageBox.Show("El nombre de usuario no puede iniciar con un número."); txtNombreUsuario.Focus(); return false; }
+                if (string.IsNullOrWhiteSpace(txtCorreoUsuario.Text)) { MessageBox.Show("El correo es obligatorio."); txtCorreoUsuario.Focus(); return false; }
+                if (!ValidarFormatoCorreo(txtCorreoUsuario.Text)) { MessageBox.Show("El formato del correo no es válido."); txtCorreoUsuario.Focus(); return false; }
+                if (cmbNivelUsuario.SelectedItem == null) { MessageBox.Show("Debe seleccionar un nivel."); cmbNivelUsuario.Focus(); return false; }
+                if (cmbEstadoUsuario.SelectedItem == null) { MessageBox.Show("Debe seleccionar un estado."); cmbEstadoUsuario.Focus(); return false; }
+
+                // *** NUEVA VALIDACIÓN: Contraseña (solo si es nuevo) ***
+                if (!_esEdicion && string.IsNullOrWhiteSpace(txtPassword.Password))
+                {
+                    MessageBox.Show("La contraseña inicial es obligatoria para nuevos usuarios.", "Validación", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    txtPassword.Focus();
+                    return false;
+                }
+                if (!_esEdicion && txtPassword.Password.Length < 6) // Ejemplo: mínimo 6 caracteres
+                {
+                    MessageBox.Show("La contraseña debe tener al menos 6 caracteres.", "Validación", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    txtPassword.Focus();
                     return false;
                 }
             }
-            else if (_empleado.IdUsuario > 0)
-            {
-                // En modo edición, verificar si cambió el nombre de usuario
-                var usuarioActual = _authService.ObtenerPorId(_empleado.IdUsuario);
-                if (usuarioActual != null && usuarioActual.NombreUsuario != txtUsuario.Text.Trim())
-                {
-                    if (_authService.ExisteNombreUsuario(txtUsuario.Text.Trim()))
-                    {
-                        MostrarError("El nombre de usuario ya existe, por favor elija otro.");
-                        txtUsuario.Focus();
-                        return false;
-                    }
-                }
-            }
-
-            // Validar formato del nombre de usuario
-            if (!ValidarFormatoUsuario(txtUsuario.Text.Trim()))
-            {
-                MostrarError("El nombre de usuario debe tener entre 3 y 50 caracteres y solo puede contener letras, números y guiones bajos.");
-                txtUsuario.Focus();
-                return false;
-            }
-
             return true;
         }
 
         /// <summary>
-        /// Valida el formato del nombre de usuario
+        /// Obtiene los datos del empleado desde el formulario
         /// </summary>
-        private bool ValidarFormatoUsuario(string nombreUsuario)
+        /// <returns>Objeto Empleado con los datos del formulario</returns>
+        private Empleado ObtenerDatosEmpleado()
         {
-            if (string.IsNullOrEmpty(nombreUsuario) || nombreUsuario.Length < 3 || nombreUsuario.Length > 50)
+            // Tu código actual parece OK
+            var empleado = new Empleado
+            {
+                IdEmpleado = _empleadoActual?.IdEmpleado ?? 0,
+                TipoDocumento = ((ComboBoxItem)cmbTipoDocumento.SelectedItem).Content.ToString(),
+                NumeroDocumento = txtNumeroDocumento.Text.Trim(),
+                Nombre = txtNombre.Text.Trim(),
+                Apellido = txtApellido.Text.Trim(),
+                Direccion = string.IsNullOrWhiteSpace(txtDireccion.Text) ? null : txtDireccion.Text.Trim(),
+                Telefono = txtTelefono.Text.Trim(),
+                FechaContratacion = dpFechaContratacion.SelectedDate.Value,
+                SalarioBase = double.Parse(txtSalarioBase.Text, NumberStyles.Any, CultureInfo.CurrentCulture),
+                IdUsuario = _empleadoActual?.IdUsuario ?? 0,
+                Activo = chkActivo.IsChecked == true
+            };
+            return empleado;
+        }
+
+        /// <summary>
+        /// Obtiene los datos del usuario desde el formulario
+        /// </summary>
+        /// <returns>Objeto Usuario con los datos del formulario</returns>
+        private Usuario ObtenerDatosUsuario()
+        {
+            // Tu código actual parece OK
+            if (chkCrearUsuario.IsChecked != true) return null;
+            var usuario = new Usuario
+            {
+                IdUsuario = 0, // Se asignará al crear
+                NombreUsuario = txtNombreUsuario.Text.Trim(),
+                Nivel = Convert.ToInt32(((ComboBoxItem)cmbNivelUsuario.SelectedItem).Tag),
+                NombreCompleto = $"{txtNombre.Text.Trim()} {txtApellido.Text.Trim()}",
+                Correo = txtCorreoUsuario.Text.Trim(),
+                Estado = ((ComboBoxItem)cmbEstadoUsuario.SelectedItem).Tag.ToString()[0],
+                // Clave, FechaCreacion, UltimaConexion se manejan en Servicio
+            };
+            return usuario;
+        }
+
+        /// <summary>
+        /// Valida el formato del correo electrónico
+        /// </summary>
+        /// <param name="correo">Correo a validar</param>
+        /// <returns>True si el formato es válido</returns>
+        private bool ValidarFormatoCorreo(string correo)
+        {
+            try
+            {
+                var addr = new System.Net.Mail.MailAddress(correo);
+                return addr.Address == correo;
+            }
+            catch
             {
                 return false;
             }
-
-            // Solo letras, números y guiones bajos
-            Regex regex = new Regex(@"^[a-zA-Z0-9_]+$");
-            return regex.IsMatch(nombreUsuario);
         }
 
         /// <summary>
-        /// Genera una clave inicial para el usuario
+        /// Evento del botón Guardar
         /// </summary>
-        private string GenerarClaveInicial(string nombreUsuario, string numeroDocumento)
-        {
-            string inicialUsuario = nombreUsuario.Length >= 3 ? nombreUsuario.Substring(0, 3) : nombreUsuario;
-            string inicialDocumento = numeroDocumento.Length >= 3 ? numeroDocumento.Substring(numeroDocumento.Length - 3) : numeroDocumento;
-            return $"{inicialUsuario}{inicialDocumento}123";
-        }
-
-        /// <summary>
-        /// Muestra un mensaje de error en la interfaz
-        /// </summary>
-        private void MostrarError(string mensaje)
-        {
-            txtError.Text = mensaje;
-            borderError.Visibility = Visibility.Visible;
-        }
-
-        /// <summary>
-        /// Oculta el mensaje de error
-        /// </summary>
-        private void OcultarError()
-        {
-            borderError.Visibility = Visibility.Collapsed;
-        }
-
-        #region Eventos de controles
-
         private void btnGuardar_Click(object sender, RoutedEventArgs e)
         {
-            GuardarEmpleado();
-        }
+            if (!ValidarFormulario()) return;
 
-        private void btnCancelar_Click(object sender, RoutedEventArgs e)
-        {
-            // Cerrar ventana sin guardar
-            DialogResult = false;
-            Close();
-        }
+            btnGuardar.IsEnabled = false;
+            btnGuardar.Content = "Guardando...";
 
-        private void txtTelefono_PreviewTextInput(object sender, TextCompositionEventArgs e)
-        {
-            // Solo permitir números y símbolos de teléfono
-            e.Handled = !EsTelefonoValido(e.Text);
-        }
-
-        private void txtSalarioBase_PreviewTextInput(object sender, TextCompositionEventArgs e)
-        {
-            // Solo permitir números y punto decimal
-            var textBox = sender as TextBox;
-            string fullText = textBox.Text.Insert(textBox.SelectionStart, e.Text);
-
-            // Permitir solo números y un punto decimal
-            Regex regex = new Regex(@"^\d*\.?\d*$");
-            e.Handled = !regex.IsMatch(fullText);
-        }
-
-        private void chkAsociarUsuario_Checked(object sender, RoutedEventArgs e)
-        {
-            // Mostrar campos de usuario
-            pnlUsuario.Visibility = Visibility.Visible;
-            pnlNivelUsuario.Visibility = Visibility.Visible;
-            txtInfoPassword.Visibility = Visibility.Visible;
-
-            // Generar sugerencia de nombre de usuario si los campos están llenos
-            if (!string.IsNullOrEmpty(txtNombre.Text) && !string.IsNullOrEmpty(txtApellido.Text))
+            var empleado = ObtenerDatosEmpleado();
+            var usuario = ObtenerDatosUsuario();
+            string contraseña = txtPassword.Password; // Obtener contraseña
+            string errorMessage;
+            bool resultado;
+            try
             {
-                string sugerencia = GenerarSugerenciaNombreUsuario(txtNombre.Text, txtApellido.Text);
-                if (string.IsNullOrEmpty(txtUsuario.Text))
+                if (_esEdicion)
                 {
-                    txtUsuario.Text = sugerencia;
+                    resultado = _empleadoService.ActualizarEmpleado(empleado, usuario.NombreUsuario, usuario.Nivel, out errorMessage);
+
+                    if (resultado)
+                    {
+                        MessageBox.Show("Empleado actualizado correctamente.", "Éxito", MessageBoxButton.OK, MessageBoxImage.Information);
+                        this.DialogResult = true;
+                        this.Close();
+                    }
+                    else
+                    {
+                        MessageBox.Show($"Error al guardar: {errorMessage}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                    }
                 }
+                else // Es creación
+                {
+                    if (usuario == null) // Debería estar forzado a true, pero por si acaso
+                    {
+                        MessageBox.Show("Es necesario crear un usuario para un nuevo empleado.", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                        return;
+                    }
+
+                    // LLAMAR AL NUEVO MÉTODO DEL SERVICIO
+                    var empleadoCreado = _empleadoService.RegistrarEmpleadoYUsuario(empleado, usuario, contraseña, out errorMessage);
+
+                    if (empleadoCreado != null)
+                    {
+                        MessageBox.Show($"Empleado y Usuario creados correctamente.\nUsuario: {usuario.NombreUsuario}\nID Empleado: {empleadoCreado.IdEmpleado}",
+                                        "Éxito", MessageBoxButton.OK, MessageBoxImage.Information);
+                        this.DialogResult = true;
+                        this.Close();
+                    }
+                    else
+                    {
+                        MessageBox.Show($"Error al guardar: {errorMessage}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                // Logger.LogException(ex, "Error al guardar empleado");
+                MessageBox.Show($"Error inesperado: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+            finally
+            {
+                btnGuardar.IsEnabled = true;
+                btnGuardar.Content = "Guardar";
             }
         }
 
-        private void chkAsociarUsuario_Unchecked(object sender, RoutedEventArgs e)
-        {
-            // Ocultar campos de usuario
-            pnlUsuario.Visibility = Visibility.Collapsed;
-            pnlNivelUsuario.Visibility = Visibility.Collapsed;
-            txtInfoPassword.Visibility = Visibility.Collapsed;
 
-            // Limpiar campos
-            txtUsuario.Text = "";
-            cmbNivelUsuario.SelectedIndex = 1; // Paramétrico por defecto
-        }
-
-        #endregion
-
-        #region Métodos de validación
 
         /// <summary>
-        /// Verifica si un texto es un número de teléfono válido
+        /// Evento del botón Cancelar
         /// </summary>
-        private bool EsTelefonoValido(string texto)
+        private void btnCancelar_Click(object sender, RoutedEventArgs e)
         {
-            // Permitir dígitos, +, -, () y espacios
-            Regex regex = new Regex(@"^[0-9\+\-\(\)\s]*$");
-            return regex.IsMatch(texto);
+            // Verificar si hay cambios sin guardar
+            if (HayCambiosSinGuardar())
+            {
+                var resultado = MessageBox.Show(
+                    "¿Está seguro que desea cancelar? Se perderán los cambios no guardados.",
+                    "Confirmar cancelación",
+                    MessageBoxButton.YesNo,
+                    MessageBoxImage.Question);
+
+                if (resultado == MessageBoxResult.No)
+                {
+                    return;
+                }
+            }
+
+            this.DialogResult = false;
+            this.Close();
         }
 
         /// <summary>
-        /// Genera una sugerencia de nombre de usuario basada en nombre y apellido
+        /// Verifica si hay cambios sin guardar en el formulario
         /// </summary>
-        private string GenerarSugerenciaNombreUsuario(string nombre, string apellido)
+        /// <returns>True si hay cambios, False en caso contrario</returns>
+        private bool HayCambiosSinGuardar()
         {
-            // Tomar primera letra del nombre y hasta 7 caracteres del apellido
-            string inicial = nombre.Length > 0 ? nombre.Substring(0, 1).ToLower() : "";
-            string apellidoLimpio = apellido.Replace(" ", "").ToLower();
-            string apellidoCorto = apellidoLimpio.Length > 7 ? apellidoLimpio.Substring(0, 7) : apellidoLimpio;
-
-            return inicial + apellidoCorto;
+            if (_esEdicion && _empleadoActual != null)
+            {
+                // En modo edición, comparar con los datos originales
+                return txtNombre.Text.Trim() != _empleadoActual.Nombre ||
+                       txtApellido.Text.Trim() != _empleadoActual.Apellido ||
+                       txtNumeroDocumento.Text.Trim() != _empleadoActual.NumeroDocumento ||
+                       txtTelefono.Text.Trim() != _empleadoActual.Telefono ||
+                       (txtDireccion.Text.Trim() != (_empleadoActual.Direccion ?? "")) ||
+                       dpFechaContratacion.SelectedDate != _empleadoActual.FechaContratacion ||
+                       double.Parse(txtSalarioBase.Text) != _empleadoActual.SalarioBase ||
+                       chkActivo.IsChecked != _empleadoActual.Activo;
+            }
+            else
+            {
+                // En modo creación, verificar si se ha ingresado algún dato
+                return !string.IsNullOrWhiteSpace(txtNombre.Text) ||
+                       !string.IsNullOrWhiteSpace(txtApellido.Text) ||
+                       !string.IsNullOrWhiteSpace(txtNumeroDocumento.Text) ||
+                       !string.IsNullOrWhiteSpace(txtTelefono.Text) ||
+                       !string.IsNullOrWhiteSpace(txtDireccion.Text) ||
+                       txtSalarioBase.Text != "0" ||
+                       chkCrearUsuario.IsChecked == true;
+            }
         }
 
-        #endregion
+        /// <summary>
+        /// Maneja el evento de cierre de la ventana
+        /// </summary>
+        protected override void OnClosing(System.ComponentModel.CancelEventArgs e)
+        {
+            if (this.DialogResult != true && HayCambiosSinGuardar())
+            {
+                var resultado = MessageBox.Show(
+                    "¿Está seguro que desea salir? Se perderán los cambios no guardados.",
+                    "Confirmar salida",
+                    MessageBoxButton.YesNo,
+                    MessageBoxImage.Question);
+
+                if (resultado == MessageBoxResult.No)
+                {
+                    e.Cancel = true;
+                    return;
+                }
+            }
+
+            base.OnClosing(e);
+        }
     }
 }

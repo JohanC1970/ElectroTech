@@ -4,321 +4,201 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:ElectroTech.Views.Empleados"
+        xmlns:helpers="clr-namespace:ElectroTech.Helpers"
+        xmlns:sys="clr-namespace:System;assembly=mscorlib"
         mc:Ignorable="d"
-        Title="Detalle de Empleado" 
-        Height="700" 
-        Width="750"
-        WindowStartupLocation="CenterOwner"
+        Title="Detalle de Empleado"
+        Height="800" Width="550" WindowStartupLocation="CenterOwner"
         ResizeMode="NoResize">
-    <Grid>
+
+    <Window.Resources>
+        <helpers:BooleanToVisibilityConverter x:Key="BoolToVisibilityConverter"/>
+
+        <Style TargetType="TextBox">
+            <Setter Property="Height" Value="30"/>
+            <Setter Property="Padding" Value="5"/>
+            <Setter Property="Margin" Value="0,5"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+        </Style>
+        <Style TargetType="PasswordBox">
+            <Setter Property="Height" Value="30"/>
+            <Setter Property="Padding" Value="5"/>
+            <Setter Property="Margin" Value="0,5"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+        </Style>
+        <Style TargetType="ComboBox">
+            <Setter Property="Height" Value="30"/>
+            <Setter Property="Padding" Value="5"/>
+            <Setter Property="Margin" Value="0,5"/>
+        </Style>
+        <Style TargetType="DatePicker">
+            <Setter Property="Height" Value="30"/>
+            <Setter Property="Margin" Value="0,5"/>
+        </Style>
+        <Style TargetType="CheckBox">
+            <Setter Property="Margin" Value="0,10"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+        </Style>
+        <Style TargetType="Label">
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Margin" Value="0,5,0,0"/>
+        </Style>
+    </Window.Resources>
+
+    <Grid Margin="20">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
-        <!-- Encabezado -->
-        <Border Grid.Row="0" 
-               Background="#2E5D7D" 
-               Padding="20,15">
-            <TextBlock x:Name="txtTitulo" 
-                     Text="Nuevo Empleado" 
-                     FontSize="22" 
-                     FontWeight="SemiBold" 
-                     Foreground="White"/>
-        </Border>
+        <TextBlock Grid.Row="0"
+                   x:Name="txtTitulo"
+                   Text="Nuevo Empleado"
+                   FontSize="24"
+                   FontWeight="Bold"
+                   Foreground="#2E5D7D"
+                   HorizontalAlignment="Center"
+                   Margin="0,0,0,20"/>
 
-        <!-- Formulario -->
-        <ScrollViewer Grid.Row="1" 
-                    VerticalScrollBarVisibility="Auto">
-            <Grid Margin="20">
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*"/>
-                    <ColumnDefinition Width="*"/>
-                </Grid.ColumnDefinitions>
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="Auto"/>
-                    <RowDefinition Height="Auto"/>
-                    <RowDefinition Height="Auto"/>
-                    <RowDefinition Height="Auto"/>
-                    <RowDefinition Height="Auto"/>
-                    <RowDefinition Height="Auto"/>
-                    <RowDefinition Height="Auto"/>
-                    <RowDefinition Height="Auto"/>
-                    <RowDefinition Height="Auto"/>
-                </Grid.RowDefinitions>
-
-                <!-- Nombre -->
-                <StackPanel Grid.Row="0" Grid.Column="0" Margin="0,5,10,5">
-                    <TextBlock Text="Nombre *" FontSize="14" Margin="0,0,0,3" FontWeight="SemiBold"/>
-                    <TextBox x:Name="txtNombre" 
-                           Height="35" 
-                           Padding="8,5"
-                           FontSize="14"
-                           MaxLength="100"
-                           BorderBrush="#CCCCCC"
-                           BorderThickness="1"/>
-                </StackPanel>
-
-                <!-- Apellido -->
-                <StackPanel Grid.Row="0" Grid.Column="1" Margin="10,5,0,5">
-                    <TextBlock Text="Apellido *" FontSize="14" Margin="0,0,0,3" FontWeight="SemiBold"/>
-                    <TextBox x:Name="txtApellido" 
-                           Height="35" 
-                           Padding="8,5"
-                           FontSize="14"
-                           MaxLength="100"
-                           BorderBrush="#CCCCCC"
-                           BorderThickness="1"/>
-                </StackPanel>
-
-                <!-- Tipo de Documento -->
-                <StackPanel Grid.Row="1" Grid.Column="0" Margin="0,5,10,5">
-                    <TextBlock Text="Tipo de Documento *" FontSize="14" Margin="0,0,0,3" FontWeight="SemiBold"/>
-                    <ComboBox x:Name="cmbTipoDocumento" 
-                            Height="35" 
-                            Padding="8,5"
-                            FontSize="14"
-                            BorderBrush="#CCCCCC"
-                            BorderThickness="1">
-                        <ComboBoxItem Content="DNI"/>
-                        <ComboBoxItem Content="CE"/>
-                        <ComboBoxItem Content="Pasaporte"/>
-                    </ComboBox>
-                </StackPanel>
-
-                <!-- Número de Documento -->
-                <StackPanel Grid.Row="1" Grid.Column="1" Margin="10,5,0,5">
-                    <TextBlock Text="Número de Documento *" FontSize="14" Margin="0,0,0,3" FontWeight="SemiBold"/>
-                    <TextBox x:Name="txtNumeroDocumento" 
-                           Height="35" 
-                           Padding="8,5"
-                           FontSize="14"
-                           MaxLength="20"
-                           BorderBrush="#CCCCCC"
-                           BorderThickness="1"/>
-                </StackPanel>
-
-                <!-- Dirección -->
-                <StackPanel Grid.Row="2" Grid.Column="0" Margin="0,5,10,5">
-                    <TextBlock Text="Dirección" FontSize="14" Margin="0,0,0,3" FontWeight="SemiBold"/>
-                    <TextBox x:Name="txtDireccion" 
-                           Height="35" 
-                           Padding="8,5"
-                           FontSize="14"
-                           MaxLength="200"
-                           BorderBrush="#CCCCCC"
-                           BorderThickness="1"/>
-                </StackPanel>
-
-                <!-- Teléfono -->
-                <StackPanel Grid.Row="2" Grid.Column="1" Margin="10,5,0,5">
-                    <TextBlock Text="Teléfono *" FontSize="14" Margin="0,0,0,3" FontWeight="SemiBold"/>
-                    <TextBox x:Name="txtTelefono" 
-                           Height="35" 
-                           Padding="8,5"
-                           FontSize="14"
-                           MaxLength="20"
-                           PreviewTextInput="txtTelefono_PreviewTextInput"
-                           BorderBrush="#CCCCCC"
-                           BorderThickness="1"/>
-                </StackPanel>
-
-                <!-- Fecha de Contratación -->
-                <StackPanel Grid.Row="3" Grid.Column="0" Margin="0,5,10,5">
-                    <TextBlock Text="Fecha de Contratación *" FontSize="14" Margin="0,0,0,3" FontWeight="SemiBold"/>
-                    <DatePicker x:Name="dpFechaContratacion" 
-                              Height="35" 
-                              Padding="8,5"
-                              FontSize="14"
-                              BorderBrush="#CCCCCC"
-                              BorderThickness="1"/>
-                </StackPanel>
-
-                <!-- Salario Base -->
-                <StackPanel Grid.Row="3" Grid.Column="1" Margin="10,5,0,5">
-                    <TextBlock Text="Salario Base *" FontSize="14" Margin="0,0,0,3" FontWeight="SemiBold"/>
-                    <TextBox x:Name="txtSalarioBase" 
-                           Height="35" 
-                           Padding="8,5"
-                           FontSize="14"
-                           PreviewTextInput="txtSalarioBase_PreviewTextInput"
-                           BorderBrush="#CCCCCC"
-                           BorderThickness="1"/>
-                </StackPanel>
-
-                <!-- Información de Usuario -->
-                <GroupBox Grid.Row="4" Grid.Column="0" Grid.ColumnSpan="2" Margin="0,15,0,5"
-                        Header="Información de Usuario"
-                        FontSize="14"
-                        FontWeight="SemiBold"
-                        BorderBrush="#CCCCCC"
-                        BorderThickness="1">
-                    <Grid Margin="10">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="*"/>
-                        </Grid.ColumnDefinitions>
-                        <Grid.RowDefinitions>
-                            <RowDefinition Height="Auto"/>
-                            <RowDefinition Height="Auto"/>
-                            <RowDefinition Height="Auto"/>
-                        </Grid.RowDefinitions>
-
-                        <!-- Checkbox para asociar usuario -->
-                        <CheckBox x:Name="chkAsociarUsuario" 
-                                Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="2"
-                                Content="Crear una cuenta de usuario para este empleado" 
-                                Margin="0,5,0,15"
-                                FontSize="14"
-                                Checked="chkAsociarUsuario_Checked"
-                                Unchecked="chkAsociarUsuario_Unchecked"/>
-
-                        <!-- Usuario -->
-                        <StackPanel x:Name="pnlUsuario" 
-                                  Grid.Row="1" Grid.Column="0" 
-                                  Margin="0,5,10,5"
-                                  Visibility="Collapsed">
-                            <TextBlock Text="Nombre de Usuario *" FontSize="14" Margin="0,0,0,3" FontWeight="SemiBold"/>
-                            <TextBox x:Name="txtUsuario" 
-                                   Height="35" 
-                                   Padding="8,5"
-                                   FontSize="14"
-                                   MaxLength="50"
-                                   BorderBrush="#CCCCCC"
-                                   BorderThickness="1"/>
-                        </StackPanel>
-
-                        <!-- Nivel de Usuario -->
-                        <StackPanel x:Name="pnlNivelUsuario" 
-                                  Grid.Row="1" Grid.Column="1" 
-                                  Margin="10,5,0,5"
-                                  Visibility="Collapsed">
-                            <TextBlock Text="Nivel de Usuario *" FontSize="14" Margin="0,0,0,3" FontWeight="SemiBold"/>
-                            <ComboBox x:Name="cmbNivelUsuario" 
-                                    Height="35" 
-                                    Padding="8,5"
-                                    FontSize="14"
-                                    BorderBrush="#CCCCCC"
-                                    BorderThickness="1">
-                                <ComboBoxItem Content="Administrador" Tag="1"/>
-                                <ComboBoxItem Content="Paramétrico" Tag="2"/>
-                                <ComboBoxItem Content="Esporádico" Tag="3"/>
-                            </ComboBox>
-                        </StackPanel>
-
-                        <!-- Información sobre la contraseña -->
-                        <TextBlock x:Name="txtInfoPassword"
-                                 Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="2"
-                                 Text="Se generará una contraseña temporal que se mostrará al guardar el empleado."
-                                 FontSize="12"
-                                 Foreground="#666666"
-                                 FontStyle="Italic"
-                                 Margin="0,10,0,0"
-                                 TextWrapping="Wrap"
-                                 Visibility="Collapsed"/>
-                    </Grid>
-                </GroupBox>
-
-                <!-- Campos de solo edición -->
-                <StackPanel x:Name="pnlCamposEdicion" 
-                          Grid.Row="5" 
-                          Grid.Column="0" 
-                          Grid.ColumnSpan="2" 
-                          Margin="0,5,0,5" 
-                          Visibility="Collapsed">
-                    <CheckBox x:Name="chkActivo" 
-                            Content="Empleado Activo" 
-                            FontSize="14" 
-                            FontWeight="SemiBold"
-                            Margin="0,10,0,0"
-                            IsChecked="True"/>
-                </StackPanel>
-
-                <!-- Separador -->
-                <Separator Grid.Row="6" Grid.Column="0" Grid.ColumnSpan="2" Margin="0,15,0,10"/>
-
-                <!-- Mensajes de error -->
-                <Border x:Name="borderError"
-                       Grid.Row="7" 
-                       Grid.Column="0" 
-                       Grid.ColumnSpan="2"
-                       Background="#FFF3CD"
-                       BorderBrush="#FFC107"
-                       BorderThickness="1"
-                       CornerRadius="4"
-                       Padding="10"
-                       Margin="0,0,0,10"
-                       Visibility="Collapsed">
-                    <TextBlock x:Name="txtError" 
-                             Foreground="#856404"
-                             FontSize="13"
-                             TextWrapping="Wrap"/>
+        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+            <StackPanel>
+                <Border BorderBrush="#E0E0E0" BorderThickness="1" CornerRadius="5" Padding="15" Margin="0,0,0,15">
+                    <StackPanel>
+                        <TextBlock Text="Datos Personales" FontSize="16" FontWeight="Bold" Foreground="#2E5D7D" Margin="0,0,0,10"/>
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="10"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <StackPanel Grid.Column="0">
+                                <Label Content="Nombre *"/>
+                                <TextBox x:Name="txtNombre" MaxLength="100"/>
+                            </StackPanel>
+                            <StackPanel Grid.Column="2">
+                                <Label Content="Apellido *"/>
+                                <TextBox x:Name="txtApellido" MaxLength="100"/>
+                            </StackPanel>
+                        </Grid>
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="120"/>
+                                <ColumnDefinition Width="10"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <StackPanel Grid.Column="0">
+                                <Label Content="Tipo Doc. *"/>
+                                <ComboBox x:Name="cmbTipoDocumento">
+                                    <ComboBoxItem Content="CC" IsSelected="True"/>
+                                    <ComboBoxItem Content="CE"/>
+                                    <ComboBoxItem Content="PAS"/>
+                                </ComboBox>
+                            </StackPanel>
+                            <StackPanel Grid.Column="2">
+                                <Label Content="Número de Documento *"/>
+                                <TextBox x:Name="txtNumeroDocumento" MaxLength="20"/>
+                            </StackPanel>
+                        </Grid>
+                        <Label Content="Dirección"/>
+                        <TextBox x:Name="txtDireccion" MaxLength="200"/>
+                        <Label Content="Teléfono *"/>
+                        <TextBox x:Name="txtTelefono" MaxLength="20"/>
+                    </StackPanel>
                 </Border>
 
-                <!-- Campos obligatorios -->
-                <TextBlock Grid.Row="8" 
-                         Grid.Column="0" 
-                         Grid.ColumnSpan="2" 
-                         Text="* Campos obligatorios" 
-                         Foreground="#666666" 
-                         FontSize="12"
-                         FontStyle="Italic"
-                         Margin="0,5,0,0"/>
-            </Grid>
+                <Border BorderBrush="#E0E0E0" BorderThickness="1" CornerRadius="5" Padding="15" Margin="0,0,0,15">
+                    <StackPanel>
+                        <TextBlock Text="Datos Laborales" FontSize="16" FontWeight="Bold" Foreground="#2E5D7D" Margin="0,0,0,10"/>
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="10"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <StackPanel Grid.Column="0">
+                                <Label Content="Fecha de Contratación *"/>
+                                <DatePicker x:Name="dpFechaContratacion" SelectedDate="{x:Static sys:DateTime.Now}"/>
+                            </StackPanel>
+                            <StackPanel Grid.Column="2">
+                                <Label Content="Salario Base *"/>
+                                <TextBox x:Name="txtSalarioBase" Text="0"/>
+                            </StackPanel>
+                        </Grid>
+                        <CheckBox x:Name="chkActivo" Content="Empleado activo" IsChecked="True"/>
+                    </StackPanel>
+                </Border>
+
+                <Border BorderBrush="#E0E0E0" BorderThickness="1" CornerRadius="5" Padding="15">
+                    <StackPanel>
+                        <CheckBox x:Name="chkCrearUsuario"
+                                  Content="Crear/Gestionar usuario del sistema"
+                                  Checked="chkCrearUsuario_Checked"
+                                  Unchecked="chkCrearUsuario_Unchecked"/>
+
+                        <StackPanel x:Name="panelUsuario"
+                                    Visibility="{Binding IsChecked, ElementName=chkCrearUsuario, Converter={StaticResource BoolToVisibilityConverter}}"
+                                    Margin="20,10,0,0">
+
+                            <TextBlock Text="Datos de Usuario del Sistema"
+                                       FontSize="16"
+                                       FontWeight="Bold"
+                                       Foreground="#2E5D7D"
+                                       Margin="0,0,0,10"/>
+
+                            <Label Content="Nombre de Usuario *"/>
+                            <TextBox x:Name="txtNombreUsuario" MaxLength="50"/>
+
+                            <Label Content="Correo Electrónico *"/>
+                            <TextBox x:Name="txtCorreoUsuario" MaxLength="100"/>
+
+                            <Label Content="Contraseña Inicial *"/>
+                            <PasswordBox x:Name="txtPassword" MaxLength="50"/>
+                            <Label Content="Nivel de Usuario *"/>
+                            <ComboBox x:Name="cmbNivelUsuario" SelectedIndex="1">
+                                <ComboBoxItem Content="1 - Administrador" Tag="1"/>
+                                <ComboBoxItem Content="2 - Paramétrico" Tag="2"/>
+                                <ComboBoxItem Content="3 - Esporádico" Tag="3"/>
+                            </ComboBox>
+
+                            <Label Content="Estado del Usuario"/>
+                            <ComboBox x:Name="cmbEstadoUsuario" SelectedIndex="0">
+                                <ComboBoxItem Content="Activo" Tag="A"/>
+                                <ComboBoxItem Content="Inactivo" Tag="I"/>
+                            </ComboBox>
+
+                            <TextBlock Text="Nota: Si es un nuevo usuario, ingrese una contraseña inicial. El empleado deberá cambiarla en su primer acceso."
+                                       FontStyle="Italic"
+                                       Foreground="#666666"
+                                       Margin="0,10,0,0"
+                                       TextWrapping="Wrap"/>
+                        </StackPanel>
+                    </StackPanel>
+                </Border>
+            </StackPanel>
         </ScrollViewer>
 
-        <!-- Botones -->
-        <Border Grid.Row="2" 
-               Background="#F8F9FA" 
-               BorderBrush="#DEE2E6" 
-               BorderThickness="0,1,0,0" 
-               Padding="20,15">
-            <StackPanel Orientation="Horizontal" 
-                      HorizontalAlignment="Right">
-                <Button x:Name="btnCancelar" 
-                      Content="Cancelar" 
-                      Width="100" 
-                      Height="35"
-                      Margin="0,0,10,0"
-                      Background="White"
-                      Foreground="#6C757D"
-                      BorderBrush="#6C757D"
-                      BorderThickness="1"
-                      FontSize="14"
-                      Click="btnCancelar_Click">
-                    <Button.Style>
-                        <Style TargetType="Button">
-                            <Style.Triggers>
-                                <Trigger Property="IsMouseOver" Value="True">
-                                    <Setter Property="Background" Value="#6C757D"/>
-                                    <Setter Property="Foreground" Value="White"/>
-                                </Trigger>
-                            </Style.Triggers>
-                        </Style>
-                    </Button.Style>
-                </Button>
-                <Button x:Name="btnGuardar" 
-                      Content="Guardar" 
-                      Width="100" 
-                      Height="35"
-                      Background="#28A745"
-                      Foreground="White"
-                      BorderThickness="0"
-                      FontSize="14"
-                      FontWeight="SemiBold"
-                      Click="btnGuardar_Click">
-                    <Button.Style>
-                        <Style TargetType="Button">
-                            <Style.Triggers>
-                                <Trigger Property="IsMouseOver" Value="True">
-                                    <Setter Property="Background" Value="#218838"/>
-                                </Trigger>
-                            </Style.Triggers>
-                        </Style>
-                    </Button.Style>
-                </Button>
-            </StackPanel>
-        </Border>
+        <StackPanel Grid.Row="2"
+                    Orientation="Horizontal"
+                    HorizontalAlignment="Right"
+                    Margin="0,20,0,0">
+
+            <Button x:Name="btnGuardar"
+                    Content="Guardar"
+                    Width="100"
+                    Height="35"
+                    Margin="5"
+                    Click="btnGuardar_Click"
+                    Background="#2E5D7D"
+                    Foreground="White"
+                    FontWeight="Bold"/>
+
+            <Button x:Name="btnCancelar"
+                    Content="Cancelar"
+                    Width="100"
+                    Height="35"
+                    Margin="5"
+                    Click="btnCancelar_Click"/>
+        </StackPanel>
     </Grid>
 </Window>

@@ -4,6 +4,7 @@ using System.Data;
 using System.Linq;
 using ElectroTech.Helpers;
 using ElectroTech.Models;
+using Oracle.ManagedDataAccess.Client;
 
 namespace ElectroTech.DataAccess
 {
@@ -45,7 +46,9 @@ namespace ElectroTech.DataAccess
 
 
                         // Validar la contraseña
+
                         if (PasswordValidator.VerifyPassword(clave, row["clave"].ToString()))
+                        //if (true)
                         {
                             Usuario usuario = new Usuario
                             {
@@ -580,5 +583,41 @@ namespace ElectroTech.DataAccess
                 throw new Exception("Error al verificar existencia de nombre de usuario.", ex);
             }
         }
+
+        public int CrearConTransaccion(Usuario usuario, string hashContrasena, OracleConnection connection, OracleTransaction transaction)
+        {
+            // Obtener SEQ
+            int idUsuario;
+            using (OracleCommand seqCmd = new OracleCommand("SELECT SEQ_USUARIO.NEXTVAL FROM DUAL", connection))
+            {
+                seqCmd.Transaction = transaction;
+                idUsuario = Convert.ToInt32(seqCmd.ExecuteScalar());
+            }
+
+            usuario.IdUsuario = idUsuario;
+
+            // Insertar
+            string query = @"
+                INSERT INTO Usuario (idUsuario, nombreUsuario, clave, nivel, nombreCompleto, correo, estado, fechaCreacion)
+                VALUES (:idUsuario, :nombreUsuario, :clave, :nivel, :nombreCompleto, :correo, :estado, :fechaCreacion)";
+
+            using (OracleCommand cmd = new OracleCommand(query, connection))
+            {
+                cmd.Transaction = transaction;
+                cmd.Parameters.Add(":idUsuario", OracleDbType.Int32, usuario.IdUsuario, ParameterDirection.Input);
+                cmd.Parameters.Add(":nombreUsuario", OracleDbType.Varchar2, usuario.NombreUsuario, ParameterDirection.Input);
+                cmd.Parameters.Add(":clave", OracleDbType.Varchar2, hashContrasena, ParameterDirection.Input);
+                cmd.Parameters.Add(":nivel", OracleDbType.Int32, usuario.Nivel, ParameterDirection.Input);
+                cmd.Parameters.Add(":nombreCompleto", OracleDbType.Varchar2, usuario.NombreCompleto, ParameterDirection.Input);
+                cmd.Parameters.Add(":correo", OracleDbType.Varchar2, usuario.Correo, ParameterDirection.Input);
+                cmd.Parameters.Add(":estado", OracleDbType.Char, usuario.Estado.ToString(), ParameterDirection.Input);
+                cmd.Parameters.Add(":fechaCreacion", OracleDbType.Date, usuario.FechaCreacion, ParameterDirection.Input);
+
+                if (cmd.ExecuteNonQuery() == 0) throw new Exception("Error al insertar usuario.");
+            }
+            return idUsuario;
+        }
+
     }
+
 }

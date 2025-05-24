@@ -479,5 +479,46 @@ namespace ElectroTech.DataAccess
 
             return empleado;
         }
+
+        public int CrearConTransaccion(Empleado empleado, OracleConnection connection, OracleTransaction transaction)
+        {
+            // Obtener SEQ
+            int idEmpleado;
+            using (OracleCommand seqCmd = new OracleCommand("SELECT SEQ_EMPLEADO.NEXTVAL FROM DUAL", connection))
+            {
+                seqCmd.Transaction = transaction;
+                idEmpleado = Convert.ToInt32(seqCmd.ExecuteScalar());
+            }
+
+            empleado.IdEmpleado = idEmpleado;
+
+            // Insertar
+            string query = @"
+                INSERT INTO Empleado (idEmpleado, tipoDocumento, numeroDocumento, nombre, apellido, 
+                                      direccion, telefono, fechaContratacion, salarioBase, idUsuario, activo)
+                VALUES (:idEmpleado, :tipoDocumento, :numeroDocumento, :nombre, :apellido, 
+                        :direccion, :telefono, :fechaContratacion, :salarioBase, :idUsuario, :activo)";
+
+            using (OracleCommand cmd = new OracleCommand(query, connection))
+            {
+                cmd.Transaction = transaction;
+                cmd.Parameters.Add(":idEmpleado", OracleDbType.Int32, empleado.IdEmpleado, ParameterDirection.Input);
+                cmd.Parameters.Add(":tipoDocumento", OracleDbType.Varchar2, empleado.TipoDocumento, ParameterDirection.Input);
+                cmd.Parameters.Add(":numeroDocumento", OracleDbType.Varchar2, empleado.NumeroDocumento, ParameterDirection.Input);
+                cmd.Parameters.Add(":nombre", OracleDbType.Varchar2, empleado.Nombre, ParameterDirection.Input);
+                cmd.Parameters.Add(":apellido", OracleDbType.Varchar2, empleado.Apellido, ParameterDirection.Input);
+                cmd.Parameters.Add(":direccion", OracleDbType.Varchar2, (object)empleado.Direccion ?? DBNull.Value, ParameterDirection.Input);
+                cmd.Parameters.Add(":telefono", OracleDbType.Varchar2, empleado.Telefono, ParameterDirection.Input);
+                cmd.Parameters.Add(":fechaContratacion", OracleDbType.Date, empleado.FechaContratacion, ParameterDirection.Input);
+                cmd.Parameters.Add(":salarioBase", OracleDbType.Decimal, empleado.SalarioBase, ParameterDirection.Input);
+                cmd.Parameters.Add(":idUsuario", OracleDbType.Int32, empleado.IdUsuario, ParameterDirection.Input);
+                cmd.Parameters.Add(":activo", OracleDbType.Char, empleado.Activo ? "S" : "N", ParameterDirection.Input);
+
+                if (cmd.ExecuteNonQuery() == 0) throw new Exception("Error al insertar empleado.");
+            }
+            return idEmpleado;
+        }
+
+
     }
 }

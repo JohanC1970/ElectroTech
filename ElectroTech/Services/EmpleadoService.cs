@@ -1,8 +1,10 @@
 ﻿using ElectroTech.DataAccess;
 using ElectroTech.Helpers;
 using ElectroTech.Models;
+using Oracle.ManagedDataAccess.Client;
 using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Text.RegularExpressions;
 
 namespace ElectroTech.Services
@@ -13,6 +15,7 @@ namespace ElectroTech.Services
     public class EmpleadoService
     {
         private readonly EmpleadoRepository _empleadoRepository;
+        private readonly UsuarioRepository _usuarioRepository;
         private readonly AuthService _authService;
 
         /// <summary>
@@ -22,6 +25,7 @@ namespace ElectroTech.Services
         {
             _empleadoRepository = new EmpleadoRepository();
             _authService = new AuthService();
+            _usuarioRepository = new UsuarioRepository();
         }
 
         /// <summary>
@@ -611,5 +615,68 @@ namespace ElectroTech.Services
                 return "Temp123456";
             }
         }
+
+        /// <summary>
+        /// Registra un nuevo Usuario y un nuevo Empleado utilizando los repositorios
+        /// dentro de una única transacción.
+        /// </summary>
+        /// <param name="empleado">El objeto Empleado con sus datos.</param>
+        /// <param name="usuario">El objeto Usuario con sus datos.</param>
+        /// <param name="rawPassword">La contraseña en texto plano.</param>
+        /// <param name="errorMessage">Mensaje de error de salida.</param>
+        /// <returns>El Empleado creado, o null si falla.</returns>
+        public Empleado RegistrarEmpleadoYUsuario(Empleado empleado, Usuario usuario, string rawPassword, out string errorMessage)
+        {
+            errorMessage = string.Empty;
+            OracleConnection connection = null;
+            OracleTransaction transaction = null;
+
+            try
+            {
+                // Validar que no exista el documento ANTES de la transacción (Opcional pero eficiente)
+                if (_empleadoRepository.ObtenerPorDocumento(empleado.TipoDocumento, empleado.NumeroDocumento) != null)
+                {
+                     errorMessage = "Ya existe un empleado con el documento especificado.";
+                     return null;
+                 }
+                // Validar que no exista el nombre de usuario ANTES (Opcional)
+                 if (_usuarioRepository.ExisteNombreUsuario(usuario.NombreUsuario))
+                 {
+                      errorMessage = "El nombre de usuario ya existe.";
+                      return null;
+                 }
+
+                connection = ConnectionManager.Instance.GetConnection();
+                transaction = connection.BeginTransaction(IsolationLevel.ReadCommitted);
+
+                string hashedPassword = PasswordValidator.HashPassword(rawPassword);
+                usuario.FechaCreacion = DateTime.Now;
+
+                int idUsuario = _usuarioRepository.CrearConTransaccion(usuario, hashedPassword, connection, transaction);
+                usuario.IdUsuario = idUsuario;
+
+                empleado.IdUsuario = idUsuario;
+                empleado.FechaContratacion = empleado.FechaContratacion == DateTime.MinValue ? DateTime.Now : empleado.FechaContratacion;
+
+                int idEmpleado = _empleadoRepository.CrearConTransaccion(empleado, connection, transaction);
+                empleado.IdEmpleado = idEmpleado;
+
+                transaction.Commit();
+                return empleado;
+            }
+            catch (Exception ex)
+            {
+                transaction?.Rollback();
+                errorMessage = $"Error al registrar: {ex.Message}";
+                // Si tienes Logger: Logger.LogException(ex, "Error transaccional al registrar empleado y usuario.");
+                Console.WriteLine($"Error al registrar: {ex.ToString()}"); // Para depuración
+                return null;
+            }
+            finally
+            {
+                ConnectionManager.Instance.CloseConnection(connection);
+            }
+        }
+
     }
 }
