@@ -77,10 +77,6 @@ namespace ElectroTech.Models
             get { return _cantidad; }
             set
             {
-                if (value <= 0)
-                {
-                    throw new ArgumentException("La cantidad debe ser mayor que cero.");
-                }
 
                 if (_cantidad != value)
                 {

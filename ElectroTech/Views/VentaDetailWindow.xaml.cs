@@ -33,6 +33,11 @@ namespace ElectroTech.Views.Ventas
         private bool _soloLectura;
         private bool _actualizandoUI;
 
+        private const double PORCENTAJE_IMPUESTO = 0.04; // 19% de IVA
+
+        /// <summary>
+        /// Constructor para una nueva venta
+        /// </summary>
         /// <summary>
         /// Constructor para una nueva venta
         /// </summary>
@@ -46,6 +51,9 @@ namespace ElectroTech.Views.Ventas
             _empleadoService = new EmpleadoService();
             _productoService = new ProductoService();
             _metodoPagoService = new MetodoPagoService();
+
+            // Inicializar _detallesVenta ANTES de configurar la ventana
+            _detallesVenta = new ObservableCollection<DetalleVenta>();
 
             // Configurar ventana para nueva venta
             _venta = new Venta();
@@ -71,6 +79,9 @@ namespace ElectroTech.Views.Ventas
             _empleadoService = new EmpleadoService();
             _productoService = new ProductoService();
             _metodoPagoService = new MetodoPagoService();
+
+            // Inicializar _detallesVenta ANTES de configurar la ventana
+            _detallesVenta = new ObservableCollection<DetalleVenta>();
 
             // Configurar ventana para edición o visualización
             _venta = venta;
@@ -155,7 +166,7 @@ namespace ElectroTech.Views.Ventas
             btnQuitarProducto.IsEnabled = false;
             dgProductos.IsReadOnly = true;
             txtDescuento.IsReadOnly = true;
-            txtImpuestos.IsReadOnly = true;
+            txtImpuestos.IsEnabled = true;
             txtObservaciones.IsReadOnly = true;
             btnGuardar.Visibility = Visibility.Collapsed;
         }
@@ -249,7 +260,7 @@ namespace ElectroTech.Views.Ventas
                 txtEstado.Text = _venta.EstadoDescripcion;
                 txtObservaciones.Text = _venta.Observaciones;
                 txtDescuento.Text = _venta.Descuento.ToString("0.00");
-                txtImpuestos.Text = _venta.Impuestos.ToString("0.00");
+              
 
                 // Seleccionar cliente
                 for (int i = 0; i < _clientes.Count; i++)
@@ -373,14 +384,7 @@ namespace ElectroTech.Views.Ventas
 
                 // Validar descuento adicional
                 double descuentoAdicional = string.IsNullOrEmpty(txtDescuento.Text) ? 0 : double.Parse(txtDescuento.Text);
-                double descuentoGeneral = descuentoAdicional + descuentoTotal;
-                double limiteDescuento = subtotalProductos * 0.3; // máximo 30% de descuento
-
-                if (descuentoGeneral > limiteDescuento)
-                {
-                    MostrarError($"El descuento total ({descuentoGeneral:C}) excede el límite permitido del 30% ({limiteDescuento:C}).");
-                    return;
-                }
+               
 
                 // Completar datos de la venta
                 _venta.Fecha = dpFecha.SelectedDate.Value;
@@ -389,7 +393,6 @@ namespace ElectroTech.Views.Ventas
                 _venta.IdMetodoPago = ((MetodoPago)cmbMetodoPago.SelectedItem).IdMetodoPago;
                 _venta.Observaciones = txtObservaciones.Text;
                 _venta.Descuento = descuentoAdicional;
-                _venta.Impuestos = string.IsNullOrEmpty(txtImpuestos.Text) ? 0 : double.Parse(txtImpuestos.Text);
                 _venta.Detalles = _detallesVenta.ToList();
 
                 // Calcular totales
@@ -482,30 +485,78 @@ namespace ElectroTech.Views.Ventas
         /// <summary>
         /// Actualiza los totales de la venta
         /// </summary>
+        /// <summary>
+        /// Actualiza los totales de la venta
+        /// </summary>
         private void ActualizarTotales()
         {
-            _actualizandoUI = true;
-
-            // Calcular subtotal de productos
-            double subtotal = 0;
-            foreach (var detalle in _detallesVenta)
+            // Validar que la colección esté inicializada
+            if (_detallesVenta == null)
             {
-                subtotal += detalle.Subtotal;
+                Logger.LogWarning("_detallesVenta es null en ActualizarTotales()");
+                return;
             }
 
-            // Obtener descuento adicional e impuestos
-            double descuento = string.IsNullOrEmpty(txtDescuento.Text) ? 0 : double.Parse(txtDescuento.Text);
-            double impuestos = string.IsNullOrEmpty(txtImpuestos.Text) ? 0 : double.Parse(txtImpuestos.Text);
+            _actualizandoUI = true;
 
-            // Calcular total
-            double total = subtotal - descuento + impuestos;
+            try
+            {
+                // Calcular subtotal de productos
+                double subtotal = 0;
+                foreach (var detalle in _detallesVenta)
+                {
+                    // Validar que el detalle no sea null
+                    if (detalle != null)
+                    {
+                        subtotal += detalle.Subtotal;
+                    }
+                }
 
-            // Actualizar UI
-            txtSubtotal.Text = subtotal.ToString("C");
-            txtTotal.Text = total.ToString("C");
+                // Obtener descuento adicional con validación
+                double descuento = 0;
+                if (!string.IsNullOrEmpty(txtDescuento?.Text))
+                {
+                    double.TryParse(txtDescuento.Text, out descuento);
+                }
 
-            _actualizandoUI = false;
+                // Calcular base gravable (subtotal - descuento)
+                double baseGravable = subtotal - descuento;
+
+                // Calcular impuestos automáticamente sobre la base gravable
+                double impuestos = baseGravable * PORCENTAJE_IMPUESTO;
+
+                // Calcular total
+                double total = baseGravable + impuestos;
+
+                // Actualizar UI con validación de controles
+                if (txtSubtotal != null)
+                    txtSubtotal.Text = subtotal.ToString("C");
+
+                if (txtImpuestos != null)
+                    txtImpuestos.Text = impuestos.ToString("C");
+
+                if (txtTotal != null)
+                    txtTotal.Text = total.ToString("C");
+
+                // Actualizar el objeto venta si existe
+                if (_venta != null)
+                {
+                    _venta.Subtotal = subtotal;
+                    _venta.Impuestos = impuestos;
+                    _venta.Total = total;
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger.LogException(ex, "Error en ActualizarTotales");
+            }
+            finally
+            {
+                _actualizandoUI = false;
+            }
         }
+
+
 
         /// <summary>
         /// Actualiza el subtotal de un detalle de venta

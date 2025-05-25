@@ -275,17 +275,15 @@
 
                             <!-- Impuestos -->
                             <TextBlock Grid.Row="2" Grid.Column="0" 
-                                     Text="Impuestos:" 
-                                     FontSize="14" 
-                                     Margin="0,5,10,5"/>
-                            <TextBox x:Name="txtImpuestos" 
-                                   Grid.Row="2" Grid.Column="1" 
-                                   Text="0.00" 
-                                   FontSize="14" 
-                                   Margin="0,5,0,5" 
-                                   TextAlignment="Right"
-                                   PreviewTextInput="txtImpuestos_PreviewTextInput"
-                                   TextChanged="txtImpuestos_TextChanged"/>
+                                    Text="Impuestos:" 
+                                    FontSize="14" 
+                                    Margin="0,5,10,5"/>
+                             <TextBlock x:Name="txtImpuestos" 
+                                    Grid.Row="2" Grid.Column="1" 
+                                    Text="$0.00" 
+                                    FontSize="14" 
+                                    Margin="0,5,0,5" 
+                                    TextAlignment="Right"/>
 
                             <!-- Total -->
                             <TextBlock Grid.Row="3" Grid.Column="0" 
