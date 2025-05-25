@@ -53,10 +53,9 @@
                             Height="35" 
                             Padding="8,5"
                             FontSize="14">
-                        <ComboBoxItem Content="DNI"/>
-                        <ComboBoxItem Content="RUC"/>
+                        <ComboBoxItem Content="CC"/>
                         <ComboBoxItem Content="CE"/>
-                        <ComboBoxItem Content="Pasaporte"/>
+                        <ComboBoxItem Content="PAS"/>
                     </ComboBox>
                 </StackPanel>
 

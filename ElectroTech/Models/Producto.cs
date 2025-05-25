@@ -14,7 +14,7 @@ namespace ElectroTech.Models
         private string _nombre;
         private string _descripcion;
         private int _idCategoria;
-        private int? _idMarca;
+        private string _marca;
         private string _modelo;
         private decimal _precioCompra;
         private decimal _precioVenta;
@@ -125,16 +125,16 @@ namespace ElectroTech.Models
         }
 
         /// <summary>
-        /// Identificador de la marca del producto (opcional).
+        /// Marca del producto.
         /// </summary>
-        public int? IdMarca
+        public string Marca
         {
-            get { return _idMarca; }
+            get { return _marca; }
             set
             {
-                if (_idMarca != value)
+                if (_marca != value)
                 {
-                    _idMarca = value;
+                    _marca = value;
                     NotifyPropertyChanged();
                 }
             }
