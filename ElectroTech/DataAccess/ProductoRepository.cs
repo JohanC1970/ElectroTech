@@ -23,7 +23,7 @@ namespace ElectroTech.DataAccess
             {
                 string query = @"
                     SELECT p.idProducto, p.codigo, p.nombre, p.descripcion, p.idCategoria, 
-                           c.nombre as nombreCategoria, p.idMarca, p.modelo, 
+                           c.nombre as nombreCategoria, p.marca, p.modelo, 
                            p.precioCompra, p.precioVenta, p.stockMinimo, p.ubicacionAlmacen, 
                            p.activo, i.cantidadDisponible, i.ultimaActualizacion
                     FROM Producto p
@@ -64,7 +64,7 @@ namespace ElectroTech.DataAccess
             {
                 string query = @"
                     SELECT p.idProducto, p.codigo, p.nombre, p.descripcion, p.idCategoria, 
-                           c.nombre as nombreCategoria, p.idMarca, p.modelo, 
+                           c.nombre as nombreCategoria, p.marca, p.modelo, 
                            p.precioCompra, p.precioVenta, p.stockMinimo, p.ubicacionAlmacen, 
                            p.activo, i.cantidadDisponible, i.ultimaActualizacion
                     FROM Producto p
@@ -108,7 +108,7 @@ namespace ElectroTech.DataAccess
             {
                 string query = @"
                     SELECT p.idProducto, p.codigo, p.nombre, p.descripcion, p.idCategoria, 
-                           c.nombre as nombreCategoria, p.idMarca, p.modelo, 
+                           c.nombre as nombreCategoria, p.marca, p.modelo, 
                            p.precioCompra, p.precioVenta, p.stockMinimo, p.ubicacionAlmacen, 
                            p.activo, i.cantidadDisponible, i.ultimaActualizacion
                     FROM Producto p
@@ -152,7 +152,7 @@ namespace ElectroTech.DataAccess
             {
                 string query = @"
                     SELECT p.idProducto, p.codigo, p.nombre, p.descripcion, p.idCategoria, 
-                           c.nombre as nombreCategoria, p.idMarca, p.modelo, 
+                           c.nombre as nombreCategoria, p.marca, p.modelo, 
                            p.precioCompra, p.precioVenta, p.stockMinimo, p.ubicacionAlmacen, 
                            p.activo, i.cantidadDisponible, i.ultimaActualizacion
                     FROM Producto p
@@ -197,7 +197,7 @@ namespace ElectroTech.DataAccess
             {
                 string query = @"
                     SELECT p.idProducto, p.codigo, p.nombre, p.descripcion, p.idCategoria, 
-                           c.nombre as nombreCategoria, p.idMarca, p.modelo, 
+                           c.nombre as nombreCategoria, p.marca, p.modelo, 
                            p.precioCompra, p.precioVenta, p.stockMinimo, p.ubicacionAlmacen, 
                            p.activo, i.cantidadDisponible, i.ultimaActualizacion
                     FROM Producto p
@@ -291,7 +291,7 @@ namespace ElectroTech.DataAccess
 
                 string query = @"
                     SELECT p.idProducto, p.codigo, p.nombre, p.descripcion, p.idCategoria, 
-                           c.nombre as nombreCategoria, p.idMarca, p.modelo, 
+                           c.nombre as nombreCategoria, p.marca, p.modelo, 
                            p.precioCompra, p.precioVenta, p.stockMinimo, p.ubicacionAlmacen, 
                            p.activo, i.cantidadDisponible, i.ultimaActualizacion
                     FROM Producto p
@@ -354,10 +354,10 @@ namespace ElectroTech.DataAccess
                 // Insertar el producto
                 string query = @"
                     INSERT INTO Producto (idProducto, codigo, nombre, descripcion, idCategoria, 
-                                          idMarca, modelo, precioCompra, precioVenta, 
+                                          marca, modelo, precioCompra, precioVenta, 
                                           stockMinimo, ubicacionAlmacen, activo)
                     VALUES (:idProducto, :codigo, :nombre, :descripcion, :idCategoria, 
-                            :idMarca, :modelo, :precioCompra, :precioVenta, 
+                            :marca, :modelo, :precioCompra, :precioVenta, 
                             :stockMinimo, :ubicacionAlmacen, :activo)";
 
                 Dictionary<string, object> parameters = new Dictionary<string, object>
@@ -367,7 +367,7 @@ namespace ElectroTech.DataAccess
                     { ":nombre", producto.Nombre },
                     { ":descripcion", producto.Descripcion ?? (object)DBNull.Value },
                     { ":idCategoria", producto.IdCategoria },
-                    { ":idMarca", producto.IdMarca ?? (object)DBNull.Value },
+                    { ":marca", producto.Marca ?? (object)DBNull.Value },
                     { ":modelo", producto.Modelo ?? (object)DBNull.Value },
                     { ":precioCompra", producto.PrecioCompra },
                     { ":precioVenta", producto.PrecioVenta },
@@ -428,7 +428,7 @@ namespace ElectroTech.DataAccess
                         nombre = :nombre,
                         descripcion = :descripcion,
                         idCategoria = :idCategoria,
-                        idMarca = :idMarca,
+                        marca = :marca,
                         modelo = :modelo,
                         precioCompra = :precioCompra,
                         precioVenta = :precioVenta,
@@ -443,7 +443,7 @@ namespace ElectroTech.DataAccess
                     { ":nombre", producto.Nombre },
                     { ":descripcion", producto.Descripcion ?? (object)DBNull.Value },
                     { ":idCategoria", producto.IdCategoria },
-                    { ":idMarca", producto.IdMarca ?? (object)DBNull.Value },
+                    { ":marca", producto.Marca ?? (object)DBNull.Value },
                     { ":modelo", producto.Modelo ?? (object)DBNull.Value },
                     { ":precioCompra", producto.PrecioCompra },
                     { ":precioVenta", producto.PrecioVenta },
@@ -640,7 +640,7 @@ namespace ElectroTech.DataAccess
                 Descripcion = row["descripcion"] != DBNull.Value ? row["descripcion"].ToString() : null,
                 IdCategoria = Convert.ToInt32(row["idCategoria"]),
                 NombreCategoria = row["nombreCategoria"] != DBNull.Value ? row["nombreCategoria"].ToString() : null,
-                IdMarca = row["idMarca"] != DBNull.Value ? (int?)Convert.ToInt32(row["idMarca"]) : null,
+                Marca = row["marca"] != DBNull.Value ? row["marca"].ToString() : null,
                 Modelo = row["modelo"] != DBNull.Value ? row["modelo"].ToString() : null,
                 PrecioCompra = Convert.ToDecimal(row["precioCompra"]),
                 PrecioVenta = Convert.ToDecimal(row["precioVenta"]),

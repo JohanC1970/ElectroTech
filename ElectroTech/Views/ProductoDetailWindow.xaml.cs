@@ -85,35 +85,10 @@ namespace ElectroTech.Views.Productos
         {
             try
             {
-                // TODO: Obtener las categorías de un servicio real
-                // Por ahora simulamos la carga de categorías
-                _categorias = new List<Categoria>
-                {
-                    new Categoria { IdCategoria = 1, Nombre = "Computadoras" },
-                    new Categoria { IdCategoria = 2, Nombre = "Smartphones" },
-                    new Categoria { IdCategoria = 3, Nombre = "Tablets" },
-                    new Categoria { IdCategoria = 4, Nombre = "Accesorios" },
-                    new Categoria { IdCategoria = 5, Nombre = "Componentes" }
-                };
-
-                cmbCategoria.ItemsSource = _categorias;
-
-                // Simular también marcas
-                List<string> marcas = new List<string>
-                {
-                    "Samsung",
-                    "Apple",
-                    "Dell",
-                    "HP",
-                    "Lenovo",
-                    "Asus",
-                    "Xiaomi",
-                    "LG",
-                    "Acer",
-                    "Sony"
-                };
-
-                cmbMarca.ItemsSource = marcas;
+                var categoriaService = new CategoriaService();
+                _categorias = categoriaService.ObtenerTodas();
+                cmbCategoria.ItemsSource = _categorias; 
+                cmbCategoria.SelectedValuePath = "IdCategoria";
             }
             catch (Exception ex)
             {
@@ -151,11 +126,7 @@ namespace ElectroTech.Views.Productos
                     }
                 }
 
-                // Seleccionar marca (si existe)
-                if (!string.IsNullOrEmpty(_producto.Modelo))
-                {
-                    cmbMarca.SelectedValue = _producto.Modelo;
-                }
+               txtMarca.Text = _producto.Marca;
 
                 // Estado
                 chkActivo.IsChecked = _producto.Activo;
@@ -225,6 +196,8 @@ namespace ElectroTech.Views.Productos
                 _producto.Descripcion = txtDescripcion.Text.Trim();
                 _producto.IdCategoria = ((Categoria)cmbCategoria.SelectedItem).IdCategoria;
                 _producto.NombreCategoria = ((Categoria)cmbCategoria.SelectedItem).Nombre;
+                _producto.Marca = string.IsNullOrWhiteSpace(txtMarca.Text) ? null : txtMarca.Text.Trim();
+                _producto.Marca = string.IsNullOrWhiteSpace(txtMarca.Text) ? null : txtMarca.Text.Trim();
                 _producto.Modelo = txtModelo.Text.Trim();
                 _producto.UbicacionAlmacen = txtUbicacionAlmacen.Text.Trim();
                 _producto.PrecioCompra = precioCompra;
