@@ -247,44 +247,175 @@ namespace ElectroTech.Services
 
             try
             {
-                // Validar datos
-                if (cantidad <= 0)
+                // Validaciones de negocio
+                if (!ValidarParametrosStock(idProducto, cantidad, tipoMovimiento, out errorMessage))
                 {
-                    errorMessage = "La cantidad debe ser mayor que cero.";
                     return false;
                 }
 
-                if (tipoMovimiento != 'E' && tipoMovimiento != 'S')
+                // Verificar que el producto existe y está activo
+                Producto producto = _productoRepository.ObtenerPorId(idProducto);
+                if (producto == null)
                 {
-                    errorMessage = "El tipo de movimiento debe ser 'E' (Entrada) o 'S' (Salida).";
+                    errorMessage = "El producto especificado no existe.";
+                    Logger.LogWarning($"Intento de actualizar stock de producto inexistente: {idProducto}");
                     return false;
                 }
 
-                // Actualizar el stock
+                if (!producto.Activo)
+                {
+                    errorMessage = "No se puede actualizar el stock de un producto inactivo.";
+                    Logger.LogWarning($"Intento de actualizar stock de producto inactivo: {idProducto}");
+                    return false;
+                }
+
+                // Validaciones específicas para salidas
+                if (tipoMovimiento == 'S')
+                {
+                    if (!ValidarSalidaStock(idProducto, cantidad, out errorMessage))
+                    {
+                        return false;
+                    }
+                }
+
+                // Ejecutar la actualización en el repositorio
                 bool resultado = _productoRepository.ActualizarStock(idProducto, cantidad, tipoMovimiento);
 
-                if (!resultado && tipoMovimiento == 'S')
+                if (resultado)
                 {
-                    errorMessage = "No hay suficiente stock disponible para realizar la salida.";
-                    Logger.LogWarning($"Intento de reducir stock insuficiente para el producto {idProducto}");
-                }
-                else if (!resultado)
-                {
-                    errorMessage = "No se pudo actualizar el stock del producto.";
-                    Logger.LogError($"Error al actualizar stock del producto {idProducto}");
+                    Logger.LogInfo($"Stock actualizado exitosamente para el producto {producto.Nombre} (ID: {idProducto}). " +
+                        $"Movimiento: {(tipoMovimiento == 'E' ? "Entrada" : "Salida")}, Cantidad: {cantidad}");
                 }
                 else
                 {
-                    Logger.LogInfo($"Stock actualizado exitosamente para el producto {idProducto}. " +
-                        $"Movimiento: {(tipoMovimiento == 'E' ? "Entrada" : "Salida")}, Cantidad: {cantidad}");
+                    errorMessage = "No se pudo actualizar el stock en la base de datos.";
+                    Logger.LogError($"Fallo en actualización de stock para producto {idProducto}");
                 }
 
                 return resultado;
             }
+            catch (DatabaseException dbEx)
+            {
+                errorMessage = dbEx.GetUserFriendlyMessage();
+                Logger.LogException(dbEx, $"Error de base de datos al actualizar stock del producto {idProducto}");
+                return false;
+            }
             catch (Exception ex)
             {
-                errorMessage = ex.Message;
+                errorMessage = "Error interno del sistema al actualizar el inventario.";
                 Logger.LogException(ex, $"Error al actualizar stock del producto {idProducto}");
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// Valida los parámetros para la actualización de stock.
+        /// </summary>
+        /// <param name="idProducto">ID del producto.</param>
+        /// <param name="cantidad">Cantidad a modificar.</param>
+        /// <param name="tipoMovimiento">Tipo de movimiento.</param>
+        /// <param name="errorMessage">Mensaje de error si la validación falla.</param>
+        /// <returns>True si los parámetros son válidos, False en caso contrario.</returns>
+        private bool ValidarParametrosStock(int idProducto, int cantidad, char tipoMovimiento, out string errorMessage)
+        {
+            errorMessage = string.Empty;
+
+            if (idProducto <= 0)
+            {
+                errorMessage = "El ID del producto debe ser válido.";
+                return false;
+            }
+
+            if (cantidad <= 0)
+            {
+                errorMessage = "La cantidad debe ser mayor que cero.";
+                return false;
+            }
+
+            if (tipoMovimiento != 'E' && tipoMovimiento != 'S')
+            {
+                errorMessage = "El tipo de movimiento debe ser 'E' (Entrada) o 'S' (Salida).";
+                return false;
+            }
+
+            return true;
+        }
+
+        /// <summary>
+        /// Valida que se pueda realizar una salida de stock.
+        /// </summary>
+        /// <param name="idProducto">ID del producto.</param>
+        /// <param name="cantidad">Cantidad a retirar.</param>
+        /// <param name="errorMessage">Mensaje de error si la validación falla.</param>
+        /// <returns>True si se puede realizar la salida, False en caso contrario.</returns>
+        private bool ValidarSalidaStock(int idProducto, int cantidad, out string errorMessage)
+        {
+            errorMessage = string.Empty;
+
+            try
+            {
+                // Obtener stock actual
+                int stockActual = _productoRepository.ObtenerStock(idProducto);
+
+                if (stockActual == -1)
+                {
+                    errorMessage = "El producto no tiene un registro de inventario asociado.";
+                    Logger.LogWarning($"Producto {idProducto} no tiene inventario");
+                    return false;
+                }
+
+                if (stockActual < cantidad)
+                {
+                    errorMessage = $"No hay suficiente stock disponible. Stock actual: {stockActual}, Cantidad solicitada: {cantidad}";
+                    Logger.LogWarning($"Stock insuficiente para producto {idProducto}. Disponible: {stockActual}, Requerido: {cantidad}");
+                    return false;
+                }
+
+                return true;
+            }
+            catch (Exception ex)
+            {
+                errorMessage = "Error al validar el stock disponible.";
+                Logger.LogException(ex, $"Error al validar stock para producto {idProducto}");
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// Obtiene el stock actual de un producto.
+        /// </summary>
+        /// <param name="idProducto">ID del producto.</param>
+        /// <returns>Cantidad actual en stock, o 0 si no hay inventario.</returns>
+        public int ObtenerStockActual(int idProducto)
+        {
+            try
+            {
+                int stock = _productoRepository.ObtenerStock(idProducto);
+                return stock == -1 ? 0 : stock;
+            }
+            catch (Exception ex)
+            {
+                Logger.LogException(ex, $"Error al obtener stock actual del producto {idProducto}");
+                return 0;
+            }
+        }
+
+        /// <summary>
+        /// Verifica si un producto tiene suficiente stock para una cantidad específica.
+        /// </summary>
+        /// <param name="idProducto">ID del producto.</param>
+        /// <param name="cantidadRequerida">Cantidad requerida.</param>
+        /// <returns>True si hay suficiente stock, False en caso contrario.</returns>
+        public bool TieneSuficienteStock(int idProducto, int cantidadRequerida)
+        {
+            try
+            {
+                int stockActual = ObtenerStockActual(idProducto);
+                return stockActual >= cantidadRequerida;
+            }
+            catch (Exception ex)
+            {
+                Logger.LogException(ex, $"Error al verificar stock suficiente para producto {idProducto}");
                 return false;
             }
         }

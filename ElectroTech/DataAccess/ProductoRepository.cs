@@ -483,22 +483,18 @@ namespace ElectroTech.DataAccess
             {
                 BeginTransaction();
 
+                // Verificar si existe el registro en inventario
+                if (!ExisteInventarioParaProducto(idProducto))
+                {
+                    // Crear registro de inventario con cantidad inicial 0
+                    CrearRegistroInventario(idProducto);
+                }
+
                 // Verificar stock actual si es una salida
                 if (tipoMovimiento == 'S')
                 {
-                    string queryVerificar = @"
-                        SELECT cantidadDisponible 
-                        FROM Inventario 
-                        WHERE idProducto = :idProducto";
-
-                    Dictionary<string, object> paramsVerificar = new Dictionary<string, object>
-                    {
-                        { ":idProducto", idProducto }
-                    };
-
-                    object stockActual = ExecuteScalar(queryVerificar, paramsVerificar);
-
-                    if (stockActual == null || Convert.ToInt32(stockActual) < cantidad)
+                    int stockActual = ObtenerStockActual(idProducto);
+                    if (stockActual < cantidad)
                     {
                         RollbackTransaction();
                         return false; // No hay suficiente stock
@@ -506,33 +502,133 @@ namespace ElectroTech.DataAccess
                 }
 
                 // Actualizar el stock
-                string query = @"
-                    UPDATE Inventario SET 
-                        cantidadDisponible = CASE 
-                                              WHEN :tipoMovimiento = 'E' THEN cantidadDisponible + :cantidad
-                                              WHEN :tipoMovimiento = 'S' THEN cantidadDisponible - :cantidad
-                                              ELSE cantidadDisponible
-                                            END,
-                        ultimaActualizacion = SYSDATE
-                    WHERE idProducto = :idProducto";
+                bool actualizado = EjecutarActualizacionStock(idProducto, cantidad, tipoMovimiento);
 
-                Dictionary<string, object> parameters = new Dictionary<string, object>
+                if (actualizado)
                 {
-                    { ":idProducto", idProducto },
-                    { ":cantidad", cantidad },
-                    { ":tipoMovimiento", tipoMovimiento.ToString() }
-                };
+                    CommitTransaction();
+                }
+                else
+                {
+                    RollbackTransaction();
+                }
 
-                int rowsAffected = ExecuteNonQuery(query, parameters);
-                CommitTransaction();
-
-                return rowsAffected > 0;
+                return actualizado;
             }
             catch (Exception ex)
             {
                 RollbackTransaction();
                 Logger.LogException(ex, $"Error al actualizar stock del producto {idProducto}");
                 throw new Exception("Error al actualizar stock del producto.", ex);
+            }
+            finally
+            {
+                CloseConnection();
+            }
+        }
+
+        /// <summary>
+        /// Verifica si existe un registro de inventario para el producto.
+        /// </summary>
+        /// <param name="idProducto">ID del producto.</param>
+        /// <returns>True si existe el registro, False en caso contrario.</returns>
+        private bool ExisteInventarioParaProducto(int idProducto)
+        {
+            string query = "SELECT COUNT(*) FROM Inventario WHERE idProducto = :idProducto";
+            Dictionary<string, object> parameters = new Dictionary<string, object>
+    {
+        { ":idProducto", idProducto }
+    };
+
+            object resultado = ExecuteScalar(query, parameters);
+            return Convert.ToInt32(resultado) > 0;
+        }
+
+        /// <summary>
+        /// Crea un registro de inventario para un producto con cantidad inicial 0.
+        /// </summary>
+        /// <param name="idProducto">ID del producto.</param>
+        private void CrearRegistroInventario(int idProducto)
+        {
+            string query = @"
+        INSERT INTO Inventario (idInventario, idProducto, cantidadDisponible, ultimaActualizacion)
+        VALUES (SEQ_INVENTARIO.NEXTVAL, :idProducto, 0, SYSDATE)";
+
+            Dictionary<string, object> parameters = new Dictionary<string, object>
+    {
+        { ":idProducto", idProducto }
+    };
+
+            ExecuteNonQuery(query, parameters);
+        }
+
+        /// <summary>
+        /// Obtiene el stock actual de un producto.
+        /// </summary>
+        /// <param name="idProducto">ID del producto.</param>
+        /// <returns>Cantidad actual en stock.</returns>
+        private int ObtenerStockActual(int idProducto)
+        {
+            string query = "SELECT cantidadDisponible FROM Inventario WHERE idProducto = :idProducto";
+            Dictionary<string, object> parameters = new Dictionary<string, object>
+    {
+        { ":idProducto", idProducto }
+    };
+
+            object resultado = ExecuteScalar(query, parameters);
+            return resultado != null ? Convert.ToInt32(resultado) : 0;
+        }
+
+        /// <summary>
+        /// Ejecuta la actualización del stock en la base de datos.
+        /// </summary>
+        /// <param name="idProducto">ID del producto.</param>
+        /// <param name="cantidad">Cantidad a modificar.</param>
+        /// <param name="tipoMovimiento">Tipo de movimiento (E: Entrada, S: Salida).</param>
+        /// <returns>True si la actualización es exitosa, False en caso contrario.</returns>
+        private bool EjecutarActualizacionStock(int idProducto, int cantidad, char tipoMovimiento)
+        {
+            string query = @"
+        UPDATE Inventario SET 
+            cantidadDisponible = CASE 
+                                  WHEN :tipoMovimiento = 'E' THEN cantidadDisponible + :cantidad
+                                  WHEN :tipoMovimiento = 'S' THEN cantidadDisponible - :cantidad
+                                  ELSE cantidadDisponible
+                                END,
+            ultimaActualizacion = SYSDATE
+        WHERE idProducto = :idProducto";
+
+            Dictionary<string, object> parameters = new Dictionary<string, object>
+    {
+        { ":idProducto", idProducto },
+        { ":cantidad", cantidad },
+        { ":tipoMovimiento", tipoMovimiento.ToString() }
+    };
+
+            int rowsAffected = ExecuteNonQuery(query, parameters);
+            return rowsAffected > 0;
+        }
+
+        /// <summary>
+        /// Obtiene el stock actual de un producto (método público para el service).
+        /// </summary>
+        /// <param name="idProducto">ID del producto.</param>
+        /// <returns>Cantidad actual en stock, o -1 si no existe el producto.</returns>
+        public int ObtenerStock(int idProducto)
+        {
+            try
+            {
+                if (!ExisteInventarioParaProducto(idProducto))
+                {
+                    return -1; // Producto no tiene inventario
+                }
+
+                return ObtenerStockActual(idProducto);
+            }
+            catch (Exception ex)
+            {
+                Logger.LogException(ex, $"Error al obtener stock del producto {idProducto}");
+                throw new Exception("Error al obtener stock del producto.", ex);
             }
             finally
             {

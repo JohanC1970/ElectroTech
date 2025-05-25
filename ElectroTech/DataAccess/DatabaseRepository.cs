@@ -162,7 +162,8 @@ namespace ElectroTech.DataAccess
 
             OracleCommand command = new OracleCommand(commandText, _connection)
             {
-                CommandType = CommandType.Text
+                CommandType = CommandType.Text,
+                BindByName = true
             };
 
             if (_transaction != null)

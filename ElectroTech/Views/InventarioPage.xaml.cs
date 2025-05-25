@@ -156,89 +156,171 @@ namespace ElectroTech.Views
         {
             try
             {
-                // Validar selección de producto
+                // Validar entrada de datos en la UI
+                if (!ValidarFormularioAjuste(out string mensajeValidacion))
+                {
+                    MessageBox.Show(mensajeValidacion, "Validación", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    return;
+                }
+
+                // Obtener datos del formulario
                 var producto = cmbProducto.SelectedItem as Producto;
-                if (producto == null)
+                int cantidad = int.Parse(txtCantidad.Text);
+                char tipoMovimiento = ((ComboBoxItem)cmbTipoMovimiento.SelectedItem).Tag.ToString()[0];
+
+                // Validar stock suficiente para salidas (validación adicional en UI)
+                if (tipoMovimiento == 'S' && !_productoService.TieneSuficienteStock(producto.IdProducto, cantidad))
                 {
-                    MessageBox.Show("Por favor, seleccione un producto.",
-                        "Validación", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    int stockActual = _productoService.ObtenerStockActual(producto.IdProducto);
+                    MessageBox.Show($"No hay suficiente stock disponible.\n\n" +
+                                  $"Stock actual: {stockActual}\n" +
+                                  $"Cantidad solicitada: {cantidad}",
+                        "Stock Insuficiente", MessageBoxButton.OK, MessageBoxImage.Warning);
                     return;
                 }
 
-                // Validar cantidad
-                if (string.IsNullOrWhiteSpace(txtCantidad.Text) || !int.TryParse(txtCantidad.Text, out int cantidad) || cantidad <= 0)
-                {
-                    MessageBox.Show("Por favor, ingrese una cantidad válida (mayor que cero).",
-                        "Validación", MessageBoxButton.OK, MessageBoxImage.Warning);
-                    return;
-                }
-
-                // Obtener tipo de movimiento
-                var selectedItem = cmbTipoMovimiento.SelectedItem as ComboBoxItem;
-                if (selectedItem == null)
-                {
-                    MessageBox.Show("Por favor, seleccione un tipo de movimiento.",
-                        "Validación", MessageBoxButton.OK, MessageBoxImage.Warning);
-                    return;
-                }
-
-                char tipoMovimiento = selectedItem.Tag.ToString()[0];
-
-                // Confirmar ajuste
-                string mensajeConfirmacion = tipoMovimiento == 'E'
-                    ? $"¿Está seguro que desea agregar {cantidad} unidades al inventario del producto '{producto.Nombre}'?"
-                    : $"¿Está seguro que desea retirar {cantidad} unidades del inventario del producto '{producto.Nombre}'?";
-
-                var resultado = MessageBox.Show(mensajeConfirmacion,
-                    "Confirmar ajuste",
-                    MessageBoxButton.YesNo,
-                    MessageBoxImage.Question);
-
-                if (resultado == MessageBoxResult.No)
+                // Mostrar confirmación
+                if (!MostrarConfirmacionAjuste(producto, cantidad, tipoMovimiento))
                 {
                     return;
                 }
 
-                // Realizar ajuste
+                // Ejecutar ajuste
                 string errorMessage;
                 bool actualizado = _productoService.ActualizarStock(producto.IdProducto, cantidad, tipoMovimiento, out errorMessage);
 
+                // Mostrar resultado
                 if (actualizado)
                 {
-                    MessageBox.Show($"Inventario ajustado con éxito. El stock actual del producto '{producto.Nombre}' ha sido actualizado.",
-                        "Información", MessageBoxButton.OK, MessageBoxImage.Information);
-
-                    // Recargar inventario
-                    CargarInventario();
-                    cmbProducto.ItemsSource = _productos;
-
-                    // Actualizar el stock mostrado si el mismo producto sigue seleccionado
-                    if (cmbProducto.SelectedItem is Producto productoSeleccionado && productoSeleccionado.IdProducto == producto.IdProducto)
-                    {
-                        // Buscar el producto actualizado en la lista
-                        foreach (Producto p in _productos)
-                        {
-                            if (p.IdProducto == producto.IdProducto)
-                            {
-                                txtStockActual.Text = p.CantidadDisponible.ToString();
-                                break;
-                            }
-                        }
-                    }
+                    MostrarExitoAjuste(producto, cantidad, tipoMovimiento);
+                    LimpiarFormulario();
+                    RefrescarDatos();
                 }
                 else
                 {
-                    MessageBox.Show($"Error al ajustar el inventario: {errorMessage}",
-                        "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                    MostrarErrorAjuste(errorMessage);
                 }
             }
             catch (Exception ex)
             {
-                Logger.LogException(ex, "Error al ajustar inventario");
-                MessageBox.Show("Error al ajustar el inventario: " + ex.Message,
-                    "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                Logger.LogException(ex, "Error en la interfaz al ajustar inventario");
+                MessageBox.Show($"Error inesperado en la interfaz:\n\n{ex.Message}\n\n" +
+                               "Si el problema persiste, contacte al administrador del sistema.",
+                    "Error del Sistema", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
+
+        /// <summary>
+        /// Valida que todos los campos del formulario estén correctos.
+        /// </summary>
+        /// <param name="mensajeError">Mensaje de error si la validación falla.</param>
+        /// <returns>True si la validación es exitosa, False en caso contrario.</returns>
+        private bool ValidarFormularioAjuste(out string mensajeError)
+        {
+            mensajeError = string.Empty;
+
+            // Validar selección de producto
+            if (cmbProducto.SelectedItem == null)
+            {
+                mensajeError = "Por favor, seleccione un producto.";
+                return false;
+            }
+
+            // Validar cantidad
+            if (string.IsNullOrWhiteSpace(txtCantidad.Text) ||
+                !int.TryParse(txtCantidad.Text, out int cantidad) ||
+                cantidad <= 0)
+            {
+                mensajeError = "Por favor, ingrese una cantidad válida (mayor que cero).";
+                return false;
+            }
+
+            // Validar tipo de movimiento
+            if (cmbTipoMovimiento.SelectedItem == null)
+            {
+                mensajeError = "Por favor, seleccione un tipo de movimiento.";
+                return false;
+            }
+
+            return true;
+        }
+
+        /// <summary>
+        /// Muestra el diálogo de confirmación para el ajuste.
+        /// </summary>
+        /// <param name="producto">Producto a ajustar.</param>
+        /// <param name="cantidad">Cantidad del ajuste.</param>
+        /// <param name="tipoMovimiento">Tipo de movimiento.</param>
+        /// <returns>True si el usuario confirma, False en caso contrario.</returns>
+        private bool MostrarConfirmacionAjuste(Producto producto, int cantidad, char tipoMovimiento)
+        {
+            int stockActual = _productoService.ObtenerStockActual(producto.IdProducto);
+            int stockDespues = tipoMovimiento == 'E' ? stockActual + cantidad : stockActual - cantidad;
+
+            string mensajeConfirmacion = tipoMovimiento == 'E'
+                ? $"¿Está seguro que desea agregar {cantidad} unidades al inventario?"
+                : $"¿Está seguro que desea retirar {cantidad} unidades del inventario?";
+
+            mensajeConfirmacion += $"\n\nProducto: {producto.Nombre}\n" +
+                                  $"Stock actual: {stockActual}\n" +
+                                  $"Stock después del ajuste: {stockDespues}";
+
+            var resultado = MessageBox.Show(mensajeConfirmacion,
+                "Confirmar Ajuste de Inventario",
+                MessageBoxButton.YesNo,
+                MessageBoxImage.Question);
+
+            return resultado == MessageBoxResult.Yes;
+        }
+
+        /// <summary>
+        /// Muestra el mensaje de éxito del ajuste.
+        /// </summary>
+        /// <param name="producto">Producto ajustado.</param>
+        /// <param name="cantidad">Cantidad del ajuste.</param>
+        /// <param name="tipoMovimiento">Tipo de movimiento.</param>
+        private void MostrarExitoAjuste(Producto producto, int cantidad, char tipoMovimiento)
+        {
+            string tipoMovimientoTexto = tipoMovimiento == 'E' ? "Entrada" : "Salida";
+
+            MessageBox.Show($"¡Inventario ajustado con éxito!\n\n" +
+                          $"Producto: {producto.Nombre}\n" +
+                          $"Movimiento: {tipoMovimientoTexto} de {cantidad} unidades\n" +
+                          $"El stock ha sido actualizado correctamente.",
+                "Ajuste Exitoso", MessageBoxButton.OK, MessageBoxImage.Information);
+        }
+
+        /// <summary>
+        /// Muestra el mensaje de error del ajuste.
+        /// </summary>
+        /// <param name="errorMessage">Mensaje de error.</param>
+        private void MostrarErrorAjuste(string errorMessage)
+        {
+            MessageBox.Show($"No se pudo ajustar el inventario:\n\n{errorMessage}",
+                "Error en Ajuste", MessageBoxButton.OK, MessageBoxImage.Error);
+        }
+
+
+        /// <summary>
+        /// Limpia el formulario después de un ajuste exitoso.
+        /// </summary>
+        private void LimpiarFormulario()
+        {
+            txtCantidad.Text = "1";
+            cmbProducto.SelectedIndex = -1;
+            txtStockActual.Text = "0";
+            cmbTipoMovimiento.SelectedIndex = 0; // Entrada por defecto
+        }
+
+        /// <summary>
+        /// Refresca los datos del inventario y productos.
+        /// </summary>
+        private void RefrescarDatos()
+        {
+            CargarInventario();
+            CargarProductos();
+        }
+
 
         #endregion
     }
