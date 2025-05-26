@@ -9,6 +9,7 @@ using System.Text.RegularExpressions;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
+using System.Windows.Media;
 
 namespace ElectroTech.Views.Compras
 {
@@ -30,17 +31,24 @@ namespace ElectroTech.Views.Compras
         /// <summary>
         /// Constructor para una nueva compra
         /// </summary>
+        /// <summary>
+        /// Constructor para una nueva compra
+        /// </summary>
         public CompraDetailWindow()
         {
-            InitializeComponent();
-
+            // IMPORTANTE: Inicializar servicios ANTES de InitializeComponent()
             _compraService = new CompraService();
             _proveedorService = new ProveedorService();
             _productoService = new ProductoService();
+
+            // Inicializar colección ANTES de InitializeComponent
+            _detallesCompra = new ObservableCollection<DetalleCompra>();
+
+            InitializeComponent();
+
             _compra = new Compra();
             _esNuevo = true;
             _soloLectura = false;
-            _detallesCompra = new ObservableCollection<DetalleCompra>();
 
             // Configurar ventana para nueva compra
             txtTitulo.Text = "Nueva Orden de Compra";
@@ -56,15 +64,19 @@ namespace ElectroTech.Views.Compras
         /// </summary>
         public CompraDetailWindow(Compra compra, bool soloLectura)
         {
-            InitializeComponent();
-
+            // IMPORTANTE: Inicializar servicios ANTES de InitializeComponent()
             _compraService = new CompraService();
             _proveedorService = new ProveedorService();
             _productoService = new ProductoService();
+
+            // Inicializar colección ANTES de InitializeComponent
+            _detallesCompra = new ObservableCollection<DetalleCompra>(compra.Detalles ?? new List<DetalleCompra>());
+
+            InitializeComponent();
+
             _compra = compra;
             _esNuevo = false;
             _soloLectura = soloLectura;
-            _detallesCompra = new ObservableCollection<DetalleCompra>(compra.Detalles ?? new List<DetalleCompra>());
 
             // Configurar ventana según modo
             if (soloLectura)
@@ -95,20 +107,34 @@ namespace ElectroTech.Views.Compras
         {
             try
             {
+                // Asegurar que la colección esté inicializada
+                if (_detallesCompra == null)
+                {
+                    _detallesCompra = new ObservableCollection<DetalleCompra>();
+                }
+
+                // Configurar lista de detalles PRIMERO
+                dgDetalles.ItemsSource = _detallesCompra;
+
                 // Cargar proveedores
                 CargarProveedores();
 
                 // Cargar productos
                 CargarProductos();
 
-                // Configurar lista de detalles
-                dgDetalles.ItemsSource = _detallesCompra;
-
                 // Configurar modo solo lectura si es necesario
                 if (_soloLectura)
                 {
                     ConfigurarModoSoloLectura();
                 }
+                else if (_esNuevo)
+                {
+                    // Para compras nuevas, activar generación automática DESPUÉS de que todo esté inicializado
+                    chkGenerarNumero.IsChecked = true; // Esto disparará el evento y generará el número
+                }
+
+                // Actualizar totales inicial
+                ActualizarTotales();
             }
             catch (Exception ex)
             {
@@ -312,30 +338,88 @@ namespace ElectroTech.Views.Compras
         /// <summary>
         /// Actualiza los totales de la compra
         /// </summary>
+        /// <summary>
+        /// Actualiza los totales de la compra
+        /// </summary>
         private void ActualizarTotales()
         {
             try
             {
-                // Calcular subtotal
-                double subtotal = _detallesCompra.Sum(d => d.Subtotal);
-                txtSubtotal.Text = subtotal.ToString("N2");
-
-                // Obtener impuestos
-                double impuestos;
-                if (!double.TryParse(txtImpuestos.Text, out impuestos))
+                // Validar que la colección esté inicializada
+                if (_detallesCompra == null)
                 {
-                    impuestos = 0;
+                    Logger.LogWarning("_detallesCompra es null en ActualizarTotales");
+
+                    // Inicializar si es null
+                    _detallesCompra = new ObservableCollection<DetalleCompra>();
+
+                    // Asignar al DataGrid si no está asignado
+                    if (dgDetalles.ItemsSource == null)
+                    {
+                        dgDetalles.ItemsSource = _detallesCompra;
+                    }
+                }
+
+                // Calcular subtotal - validar que haya elementos y no sean null
+                double subtotal = 0;
+                if (_detallesCompra.Count > 0)
+                {
+                    subtotal = _detallesCompra
+                        .Where(d => d != null) // Filtrar elementos null
+                        .Sum(d => d.Subtotal);
+                }
+
+                // Validar y asignar subtotal
+                if (txtSubtotal != null)
+                {
+                    txtSubtotal.Text = subtotal.ToString("N2");
+                }
+
+                // Obtener impuestos con validación
+                double impuestos = 0;
+                if (txtImpuestos != null && !string.IsNullOrWhiteSpace(txtImpuestos.Text))
+                {
+                    if (!double.TryParse(txtImpuestos.Text, out impuestos))
+                    {
+                        impuestos = 0;
+                        txtImpuestos.Text = "0.00";
+                    }
+                }
+                else if (txtImpuestos != null)
+                {
+                    txtImpuestos.Text = "0.00";
                 }
 
                 // Calcular total
                 double total = subtotal + impuestos;
-                txtTotal.Text = total.ToString("N2");
+
+                // Validar y asignar total
+                if (txtTotal != null)
+                {
+                    txtTotal.Text = total.ToString("N2");
+                }
+
+                Logger.LogInfo($"Totales actualizados - Subtotal: {subtotal:C}, Impuestos: {impuestos:C}, Total: {total:C}");
             }
             catch (Exception ex)
             {
                 Logger.LogException(ex, "Error al actualizar totales");
+
+                // Valores por defecto en caso de error
+                try
+                {
+                    if (txtSubtotal != null) txtSubtotal.Text = "0.00";
+                    if (txtImpuestos != null) txtImpuestos.Text = "0.00";
+                    if (txtTotal != null) txtTotal.Text = "0.00";
+                }
+                catch (Exception innerEx)
+                {
+                    Logger.LogException(innerEx, "Error al establecer valores por defecto en totales");
+                }
+
+                // Mostrar error al usuario solo si es crítico
                 MessageBox.Show("Error al actualizar los totales: " + ex.Message,
-                    "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                    "Error", MessageBoxButton.OK, MessageBoxImage.Warning);
             }
         }
 
@@ -486,12 +570,88 @@ namespace ElectroTech.Views.Compras
         }
 
         /// <summary>
-        /// Muestra un mensaje de error en la interfaz
+        /// Muestra un mensaje de error en la interfaz con scroll automático
         /// </summary>
         private void MostrarError(string mensaje)
         {
-            txtError.Text = mensaje;
-            txtError.Visibility = Visibility.Visible;
+            MessageBox.Show(mensaje,
+                    "Error", MessageBoxButton.OK, MessageBoxImage.Warning);
+        }
+
+        /// <summary>
+        /// Oculta el mensaje de error
+        /// </summary>
+        private void OcultarError()
+        {
+            try
+            {
+                if (errorBorder != null)
+                {
+                    errorBorder.Visibility = Visibility.Collapsed;
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger.LogException(ex, "Error al ocultar mensaje de error");
+            }
+        }
+
+        /// <summary>
+        /// Muestra un mensaje de error crítico usando MessageBox
+        /// </summary>
+        private void MostrarErrorCritico(string mensaje)
+        {
+            MessageBox.Show(
+                mensaje,
+                "Error Crítico",
+                MessageBoxButton.OK,
+                MessageBoxImage.Error);
+        }
+
+        /// <summary>
+        /// Muestra un mensaje de validación específico
+        /// </summary>
+        private void MostrarErrorValidacion(string campo, string mensaje)
+        {
+            string mensajeCompleto = $"Error en {campo}: {mensaje}";
+            MostrarError(mensajeCompleto);
+        }
+
+        /// <summary>
+        /// Muestra un mensaje de éxito temporal
+        /// </summary>
+        private void MostrarMensajeExito(string mensaje)
+        {
+            try
+            {
+                // Cambiar temporalmente el estilo del border a éxito
+                errorBorder.Background = new SolidColorBrush(Color.FromRgb(232, 245, 233)); // Verde claro
+                errorBorder.BorderBrush = new SolidColorBrush(Color.FromRgb(76, 175, 80)); // Verde
+                txtError.Foreground = new SolidColorBrush(Color.FromRgb(27, 94, 32)); // Verde oscuro
+                txtError.Text = "✓ " + mensaje;
+                errorBorder.Visibility = Visibility.Visible;
+
+                // Hacer scroll para que el mensaje sea visible
+                errorBorder.BringIntoView();
+
+                // Auto-ocultar después de 3 segundos y restaurar estilo
+                var timer = new System.Windows.Threading.DispatcherTimer();
+                timer.Interval = TimeSpan.FromSeconds(3);
+                timer.Tick += (s, e) =>
+                {
+                    OcultarError();
+                    // Restaurar estilo de error
+                    errorBorder.Background = new SolidColorBrush(Color.FromRgb(255, 235, 238));
+                    errorBorder.BorderBrush = new SolidColorBrush(Color.FromRgb(244, 67, 54));
+                    txtError.Foreground = new SolidColorBrush(Color.FromRgb(211, 47, 47));
+                    timer.Stop();
+                };
+                timer.Start();
+            }
+            catch (Exception ex)
+            {
+                Logger.LogException(ex, "Error al mostrar mensaje de éxito");
+            }
         }
 
         #region Eventos de controles
@@ -595,6 +755,8 @@ namespace ElectroTech.Views.Compras
                 }
             }
         }
+
+       
 
         private void txtImpuestos_TextChanged(object sender, TextChangedEventArgs e)
         {

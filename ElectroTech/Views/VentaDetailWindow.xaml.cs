@@ -33,7 +33,7 @@ namespace ElectroTech.Views.Ventas
         private bool _soloLectura;
         private bool _actualizandoUI;
 
-        private const double PORCENTAJE_IMPUESTO = 0.04; // 19% de IVA
+        private const double PORCENTAJE_IMPUESTO = 0.04; // 4% de IVA
 
         /// <summary>
         /// Constructor para una nueva venta

@@ -734,21 +734,38 @@ namespace ElectroTech.DataAccess
         /// Obtiene el consecutivo para un nuevo número de orden.
         /// </summary>
         /// <returns>Número consecutivo.</returns>
+        /// <summary>
+        /// Obtiene el consecutivo para un nuevo número de orden.
+        /// </summary>
+        /// <returns>Número consecutivo.</returns>
         public int ObtenerConsecutivoOrden()
         {
             try
             {
                 string query = @"
-                    SELECT COUNT(*) + 1 FROM Compra 
-                    WHERE numeroOrden LIKE 'CO' || TO_CHAR(SYSDATE, 'YYYYMMDD') || '%'";
+            SELECT COUNT(*) + 1 FROM Compra 
+            WHERE numeroOrden LIKE 'CO' || TO_CHAR(SYSDATE, 'YYYYMMDD') || '%'";
 
+                // Usar ExecuteScalar en lugar de ExecuteQuery
                 object result = ExecuteScalar(query);
+
+                // Validar que el resultado no sea null
+                if (result == null || result == DBNull.Value)
+                {
+                    return 1; // Si no hay registros, empezar en 1
+                }
+
                 return Convert.ToInt32(result);
             }
             catch (Exception ex)
             {
                 Logger.LogException(ex, "Error al obtener consecutivo de orden");
-                throw new Exception("Error al obtener consecutivo de orden.", ex);
+                // En caso de error, devolver 1 como valor por defecto
+                return 1;
+            }
+            finally
+            {
+                CloseConnection();
             }
         }
 
