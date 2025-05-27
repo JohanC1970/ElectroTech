@@ -106,8 +106,8 @@ namespace ElectroTech.Services
             try
             {
                 // Verificar que la contraseña actual sea correcta
-                string hashedCurrentPassword = PasswordValidator.HashPassword(claveActual);
-                Usuario userCheck = _usuarioRepository.Autenticar(usuario.NombreUsuario, hashedCurrentPassword);
+                
+                Usuario userCheck = _usuarioRepository.Autenticar(usuario.NombreUsuario, claveActual);
 
                 if (userCheck == null)
                 {

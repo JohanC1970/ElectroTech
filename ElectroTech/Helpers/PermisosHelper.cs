@@ -42,10 +42,10 @@ namespace ElectroTech.Helpers
             ReporteProductos,
             ReporteClientes,
 
-            // Configuración
-            Usuarios,
-            Bitacora,
-            Configuracion
+            // Configuración y Perfil
+            MiPerfil, // Cambiado de Usuarios
+            Bitacora
+            // Se elimina Configuracion
         }
 
         /// <summary>
@@ -67,22 +67,48 @@ namespace ElectroTech.Helpers
                 return true;
             }
 
-            // Usuario paramétrico tiene acceso a todo excepto configuración
+            // Usuario paramétrico
             if (usuario.Nivel == (int)NivelUsuario.Parametrico)
             {
-                return modulo != Modulo.Usuarios &&
-                       modulo != Modulo.Bitacora &&
-                       modulo != Modulo.Configuracion &&
-                       modulo != Modulo.Empleados;
+                switch (modulo)
+                {
+                    case Modulo.MiPerfil: // Todos los usuarios autenticados pueden ver su perfil
+                    case Modulo.Productos:
+                    case Modulo.Categorias:
+                    case Modulo.Proveedores:
+                    case Modulo.Clientes:
+                    // case Modulo.Empleados: // Paramétrico no accede a Empleados
+                    case Modulo.Ventas:
+                    case Modulo.Compras:
+                    case Modulo.Devoluciones:
+                    case Modulo.Inventario:
+                    case Modulo.ReporteVentas:
+                    case Modulo.ReporteInventario:
+                    case Modulo.ReporteProductos:
+                    case Modulo.ReporteClientes:
+                        return true;
+                    case Modulo.Bitacora: // Bitácora solo para admin
+                    case Modulo.Empleados: // Empleados solo para admin
+                        return false;
+                    default:
+                        return false;
+                }
             }
 
-            // Usuario esporádico solo tiene acceso a reportes
+            // Usuario esporádico
             if (usuario.Nivel == (int)NivelUsuario.Esporadico)
             {
-                return modulo == Modulo.ReporteVentas ||
-                       modulo == Modulo.ReporteInventario ||
-                       modulo == Modulo.ReporteProductos ||
-                       modulo == Modulo.ReporteClientes;
+                switch (modulo)
+                {
+                    case Modulo.MiPerfil: // Todos los usuarios autenticados pueden ver su perfil
+                    case Modulo.ReporteVentas:
+                    case Modulo.ReporteInventario:
+                    case Modulo.ReporteProductos:
+                    case Modulo.ReporteClientes:
+                        return true;
+                    default: // Acceso denegado al resto
+                        return false;
+                }
             }
 
             return false;

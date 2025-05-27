@@ -134,11 +134,7 @@
                                   Margin="10,20,10,5"
                                   Visibility="Collapsed"/>
 
-                        <Button x:Name="btnUsuarios" 
-                               Content="Gestión de Usuarios" 
-                               Style="{StaticResource MenuButtonStyle}"
-                               Click="btnUsuarios_Click"
-                               Visibility="Collapsed"/>
+                        <Button x:Name="btnMiPerfil" Content="Mi Perfil" Click="btnMiPerfil_Click" Style="{StaticResource MenuButtonStyle}"/>
 
                         <Button x:Name="btnBitacora" 
                                Content="Bitácora de Accesos" 
@@ -146,11 +142,7 @@
                                Click="btnBitacora_Click"
                                Visibility="Collapsed"/>
 
-                        <Button x:Name="btnConfiguracion" 
-                               Content="Configuración del Sistema" 
-                               Style="{StaticResource MenuButtonStyle}"
-                               Click="btnConfiguracion_Click"
-                               Visibility="Collapsed"/>
+                   
                     </StackPanel>
                 </ScrollViewer>
 

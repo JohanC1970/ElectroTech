@@ -9,84 +9,134 @@ using System.Threading.Tasks;
 
 namespace ElectroTech.DataAccess
 {
-    /// <summary>
-    /// Clase base que proporciona métodos genéricos para operaciones de base de datos.
-    /// </summary>
     public abstract class DatabaseRepository
     {
         protected OracleConnection _connection;
         protected OracleTransaction _transaction;
 
-        /// <summary>
-        /// Constructor que inicializa la conexión a la base de datos.
-        /// </summary>
         protected DatabaseRepository()
         {
-            _connection = null;
-            _transaction = null;
+            // No se abre la conexión aquí por defecto. Se abrirá cuando sea necesario.
         }
 
-        /// <summary>
-        /// Abre la conexión a la base de datos.
-        /// </summary>
         protected void OpenConnection()
         {
-            _connection = ConnectionManager.Instance.GetConnection();
+            if (_connection == null || _connection.State != ConnectionState.Open)
+            {
+                _connection = ConnectionManager.Instance.GetConnection(); //
+            }
         }
 
-        /// <summary>
-        /// Cierra la conexión a la base de datos.
-        /// </summary>
         protected void CloseConnection()
         {
-            ConnectionManager.Instance.CloseConnection(_connection);
-            _connection = null;
+            // Solo cierra si no estamos en medio de una transacción explícita
+            // y si la conexión fue abierta por este repositorio.
+            if (_transaction == null && _connection != null)
+            {
+                ConnectionManager.Instance.CloseConnection(_connection); //
+                _connection = null;
+            }
+            // Si hay una transacción activa, la conexión se cerrará cuando la transacción termine (commit/rollback)
+            // y luego se llame a CloseConnection en el finally del método que inició la transacción.
         }
 
-        /// <summary>
-        /// Inicia una transacción en la base de datos.
-        /// </summary>
+        protected void EnsureConnectionIsClosed()
+        {
+            // Este método es para ser llamado en el finally más externo.
+            if (_connection != null)
+            {
+                ConnectionManager.Instance.CloseConnection(_connection);
+                _connection = null;
+            }
+            _transaction = null; // Asegurarse de que la transacción también se limpie
+        }
+
+
         protected void BeginTransaction()
         {
-            if (_connection == null)
+            OpenConnection(); // Asegura que la conexión esté abierta
+            if (_transaction == null) // Solo inicia una nueva transacción si no hay una activa
             {
-                OpenConnection();
+                _transaction = _connection.BeginTransaction(IsolationLevel.ReadCommitted);
             }
-            _transaction = _connection.BeginTransaction();
         }
 
-        /// <summary>
-        /// Confirma una transacción abierta.
-        /// </summary>
         protected void CommitTransaction()
         {
-            if (_transaction != null)
+            try
             {
-                _transaction.Commit();
-                _transaction = null;
+                if (_transaction != null)
+                {
+                    if (_transaction.Connection != null && _transaction.Connection.State == ConnectionState.Open)
+                    {
+                        _transaction.Commit();
+                    }
+                    else
+                    {
+                        Logger.LogWarning("Intento de Commit en una transacción con conexión cerrada o nula."); //
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger.LogException(ex, "Error durante CommitTransaction."); //
+                // Considerar relanzar o manejar específicamente
+                throw;
+            }
+            finally
+            {
+                if (_transaction != null)
+                {
+                    _transaction.Dispose();
+                    _transaction = null;
+                }
             }
         }
 
-        /// <summary>
-        /// Cancela una transacción abierta.
-        /// </summary>
         protected void RollbackTransaction()
         {
-            if (_transaction != null)
+            try
             {
-                _transaction.Rollback();
-                _transaction = null;
+                if (_transaction != null)
+                {
+                    // Solo intentar rollback si la conexión de la transacción está abierta
+                    if (_transaction.Connection != null && _transaction.Connection.State == ConnectionState.Open)
+                    {
+                        _transaction.Rollback();
+                    }
+                    else
+                    {
+                        // Si la conexión ya está cerrada, el rollback fallaría o no haría nada.
+                        // Registrar esto puede ser útil.
+                        Logger.LogWarning("Intento de Rollback en una transacción con conexión cerrada o nula."); //
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                // Capturar la excepción de Oracle aquí si es ORA-50045 u otra relacionada
+                Logger.LogException(ex, "Error durante RollbackTransaction."); //
+                // No relanzar para evitar enmascarar la excepción original si ya estamos en un catch.
+            }
+            finally
+            {
+                if (_transaction != null)
+                {
+                    _transaction.Dispose();
+                    _transaction = null;
+                }
             }
         }
 
-        /// <summary>
-        /// Ejecuta un comando SQL que no devuelve resultados (INSERT, UPDATE, DELETE).
-        /// </summary>
-        /// <param name="commandText">El comando SQL a ejecutar.</param>
-        /// <param name="parameters">Los parámetros del comando.</param>
-        /// <returns>El número de filas afectadas.</returns>
         protected int ExecuteNonQuery(string commandText, Dictionary<string, object> parameters = null)
         {
+            bool connectionOpenedHere = false;
+            if (_connection == null || _connection.State != ConnectionState.Open)
+            {
+                OpenConnection();
+                connectionOpenedHere = true;
+            }
+
             try
             {
                 using (OracleCommand command = PrepareCommand(commandText, parameters))
@@ -96,18 +146,26 @@ namespace ElectroTech.DataAccess
             }
             catch (Exception ex)
             {
-                throw new Exception("Error al ejecutar el comando SQL.", ex);
+                Logger.LogException(ex, $"Error en ExecuteNonQuery: {commandText}"); //
+                throw; // Relanzar para que el manejo de transacciones pueda actuar
+            }
+            finally
+            {
+                if (connectionOpenedHere && _transaction == null) // Cierra solo si se abrió aquí y no hay transacción activa
+                {
+                    CloseConnection();
+                }
             }
         }
 
-        /// <summary>
-        /// Ejecuta un comando SQL que devuelve un valor escalar.
-        /// </summary>
-        /// <param name="commandText">El comando SQL a ejecutar.</param>
-        /// <param name="parameters">Los parámetros del comando.</param>
-        /// <returns>El valor escalar devuelto por el comando.</returns>
         protected object ExecuteScalar(string commandText, Dictionary<string, object> parameters = null)
         {
+            bool connectionOpenedHere = false;
+            if (_connection == null || _connection.State != ConnectionState.Open)
+            {
+                OpenConnection();
+                connectionOpenedHere = true;
+            }
             try
             {
                 using (OracleCommand command = PrepareCommand(commandText, parameters))
@@ -117,18 +175,26 @@ namespace ElectroTech.DataAccess
             }
             catch (Exception ex)
             {
-                throw new Exception("Error al ejecutar el comando SQL.", ex);
+                Logger.LogException(ex, $"Error en ExecuteScalar: {commandText}"); //
+                throw;
+            }
+            finally
+            {
+                if (connectionOpenedHere && _transaction == null)
+                {
+                    CloseConnection();
+                }
             }
         }
 
-        /// <summary>
-        /// Ejecuta un comando SQL que devuelve un conjunto de resultados.
-        /// </summary>
-        /// <param name="commandText">El comando SQL a ejecutar.</param>
-        /// <param name="parameters">Los parámetros del comando.</param>
-        /// <returns>Un DataTable con los resultados.</returns>
         protected DataTable ExecuteQuery(string commandText, Dictionary<string, object> parameters = null)
         {
+            bool connectionOpenedHere = false;
+            if (_connection == null || _connection.State != ConnectionState.Open)
+            {
+                OpenConnection();
+                connectionOpenedHere = true;
+            }
             try
             {
                 using (OracleCommand command = PrepareCommand(commandText, parameters))
@@ -143,27 +209,26 @@ namespace ElectroTech.DataAccess
             }
             catch (Exception ex)
             {
-                throw new Exception("Error al ejecutar la consulta SQL.", ex);
+                Logger.LogException(ex, $"Error en ExecuteQuery: {commandText}"); //
+                throw;
+            }
+            finally
+            {
+                if (connectionOpenedHere && _transaction == null)
+                {
+                    CloseConnection();
+                }
             }
         }
 
-        /// <summary>
-        /// Prepara un comando SQL con sus parámetros.
-        /// </summary>
-        /// <param name="commandText">El texto del comando SQL.</param>
-        /// <param name="parameters">Los parámetros del comando.</param>
-        /// <returns>Un OracleCommand preparado para su ejecución.</returns>
+
         private OracleCommand PrepareCommand(string commandText, Dictionary<string, object> parameters)
         {
-            if (_connection == null)
-            {
-                OpenConnection();
-            }
-
+            // OpenConnection(); // La conexión se maneja antes de llamar a este método
             OracleCommand command = new OracleCommand(commandText, _connection)
             {
                 CommandType = CommandType.Text,
-                BindByName = true
+                BindByName = true // Importante para Oracle al usar parámetros nombrados
             };
 
             if (_transaction != null)
@@ -178,29 +243,15 @@ namespace ElectroTech.DataAccess
                     command.Parameters.Add(new OracleParameter(parameter.Key, parameter.Value ?? DBNull.Value));
                 }
             }
-
             return command;
         }
 
-        /// <summary>
-        /// Obtiene el siguiente valor de una secuencia.
-        /// </summary>
-        /// <param name="sequenceName">Nombre de la secuencia.</param>
-        /// <returns>Siguiente valor de la secuencia.</returns>
         protected int GetNextSequenceValue(string sequenceName)
         {
-            try
-            {
-                string query = $"SELECT {sequenceName}.NEXTVAL FROM DUAL";
-                object result = ExecuteScalar(query);
-                return Convert.ToInt32(result);
-            }
-            catch (Exception ex)
-            {
-                Logger.LogException(ex, $"Error al obtener el siguiente valor de la secuencia {sequenceName}");
-                throw new Exception($"Error al obtener el siguiente valor de la secuencia {sequenceName}.", ex);
-            }
+            // Esta función ya no necesita abrir/cerrar conexión si las funciones ExecuteScalar lo hacen
+            string query = $"SELECT {sequenceName}.NEXTVAL FROM DUAL";
+            object result = ExecuteScalar(query);
+            return Convert.ToInt32(result);
         }
     }
-
 }

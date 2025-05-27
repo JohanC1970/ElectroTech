@@ -104,6 +104,7 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
+    <Compile Include="DataAccess\BitacoraRepository.cs" />
     <Compile Include="DataAccess\CategoriaRepository.cs" />
     <Compile Include="DataAccess\ClienteRepository.cs" />
     <Compile Include="DataAccess\CompraRepository.cs" />
@@ -124,6 +125,7 @@
     <Compile Include="Helpers\PermisosHelper.cs" />
     <Compile Include="Helpers\SqlHelper.cs" />
     <Compile Include="Services\AuthService.cs" />
+    <Compile Include="Services\BitacoraService.cs" />
     <Compile Include="Services\CategoriaService.cs" />
     <Compile Include="Services\ClienteService.cs" />
     <Compile Include="Services\CompraService.cs" />
@@ -135,8 +137,14 @@
     <Compile Include="Services\ProductoService.cs" />
     <Compile Include="Services\ProveedorService.cs" />
     <Compile Include="Services\VentaService.cs" />
+    <Compile Include="Views\BitacoraPage.xaml.cs">
+      <DependentUpon>BitacoraPage.xaml</DependentUpon>
+    </Compile>
     <Compile Include="Views\BusquedaVentaWindow.xaml.cs">
       <DependentUpon>BusquedaVentaWindow.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Views\CambiarContrasenaWindow.xaml.cs">
+      <DependentUpon>CambiarContrasenaWindow.xaml</DependentUpon>
     </Compile>
     <Compile Include="Views\CategoriaDetailWindow.xaml.cs">
       <DependentUpon>CategoriaDetailWindow.xaml</DependentUpon>
@@ -182,6 +190,9 @@
     </Compile>
     <Compile Include="Views\MainDashboardWindow.xaml.cs">
       <DependentUpon>MainDashboardWindow.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Views\MiPerfilPage.xaml.cs">
+      <DependentUpon>MiPerfilPage.xaml</DependentUpon>
     </Compile>
     <Compile Include="Views\NotaCreditoWindow.xaml.cs">
       <DependentUpon>NotaCreditoWindow.xaml</DependentUpon>
@@ -236,7 +247,15 @@
       <DependentUpon>MainWindow.xaml</DependentUpon>
       <SubType>Code</SubType>
     </Compile>
+    <Page Include="Views\BitacoraPage.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
     <Page Include="Views\BusquedaVentaWindow.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Views\CambiarContrasenaWindow.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
@@ -301,6 +320,10 @@
       <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Include="Views\MenuButtonStyle.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Views\MiPerfilPage.xaml">
+      <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Include="Views\NotaCreditoWindow.xaml">
