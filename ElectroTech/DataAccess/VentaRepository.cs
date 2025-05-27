@@ -250,23 +250,22 @@ namespace ElectroTech.DataAccess
             try
             {
                 string query = @"
-                    SELECT v.idVenta, v.numeroFactura, v.fecha, v.idCliente, v.idEmpleado, 
-                           v.idMetodoPago, v.subtotal, v.descuento, v.impuestos, v.total, 
-                           v.observaciones, v.estado,
-                           NVL(c.nombre || ' ' || c.apellido, 'Cliente no disponible') as nombreCliente,
-                           NVL(e.nombre || ' ' || e.apellido, 'Empleado no disponible') as nombreEmpleado,
-                           NVL(mp.nombre, 'Método no disponible') as nombreMetodoPago
+                    SELECT v.idVenta, v.numeroFactura, v.fecha, v.idCliente, 
+                           c.nombre as clienteNombre, c.apellido as clienteApellido,
+                           v.idEmpleado, e.nombre as empleadoNombre, e.apellido as empleadoApellido,
+                           v.idMetodoPago, mp.nombre as metodoPagoNombre,
+                           v.subtotal, v.descuento, v.impuestos, v.total, v.observaciones, v.estado
                     FROM Venta v
                     LEFT JOIN Cliente c ON v.idCliente = c.idCliente
                     LEFT JOIN Empleado e ON v.idEmpleado = e.idEmpleado
                     LEFT JOIN MetodoPago mp ON v.idMetodoPago = mp.idMetodoPago
-                    WHERE v.fecha BETWEEN :fechaInicio AND :fechaFin
+                    WHERE TRUNC(v.fecha) BETWEEN TRUNC(:fechaInicio) AND TRUNC(:fechaFin) -- Usar TRUNC para comparar solo fechas
                     ORDER BY v.fecha DESC";
 
                 Dictionary<string, object> parameters = new Dictionary<string, object>
                 {
-                    { ":fechaInicio", fechaInicio },
-                    { ":fechaFin", fechaFin }
+                    { ":fechaInicio", fechaInicio.Date }, // Enviar solo la parte de la fecha
+                    { ":fechaFin", fechaFin.Date }      // Enviar solo la parte de la fecha
                 };
 
                 DataTable dataTable = ExecuteQuery(query, parameters);
@@ -274,8 +273,17 @@ namespace ElectroTech.DataAccess
 
                 foreach (DataRow row in dataTable.Rows)
                 {
+                    // ConvertirDataRowAVenta NO debería cargar detalles por sí mismo
+                    // para evitar cargas N+1 si no se necesitan siempre.
                     ventas.Add(ConvertirDataRowAVenta(row));
                 }
+
+                // **** AÑADIR ESTE BUCLE PARA CARGAR LOS DETALLES DE CADA VENTA ****
+                foreach (var venta in ventas)
+                {
+                    venta.Detalles = ObtenerDetallesPorVenta(venta.IdVenta);
+                }
+                // *******************************************************************
 
                 return ventas;
             }
@@ -286,8 +294,74 @@ namespace ElectroTech.DataAccess
             }
             finally
             {
-                CloseConnection();
+                CloseConnection(); // Asegúrate que CloseConnection() se llame solo si la conexión fue abierta por este método
             }
+        }
+
+        /// <summary>
+        /// Obtiene los detalles (líneas de producto) para una venta específica.
+        /// </summary>
+        /// <param name="idVenta">El ID de la venta.</param>
+        /// <returns>Una lista de objetos DetalleVenta.</returns>
+        public List<DetalleVenta> ObtenerDetallesPorVenta(int idVenta)
+        {
+            List<DetalleVenta> detalles = new List<DetalleVenta>();
+            try
+            {
+                string query = @"
+                    SELECT dv.idDetalleVenta, dv.idVenta, dv.idProducto, 
+                           p.codigo AS productoCodigo, p.nombre AS productoNombre, p.idCategoria, cat.nombre AS productoNombreCategoria,
+                           dv.cantidad, dv.precioUnitario, dv.descuento, dv.subtotal
+                    FROM DetalleVenta dv
+                    INNER JOIN Producto p ON dv.idProducto = p.idProducto
+                    LEFT JOIN Categoria cat ON p.idCategoria = cat.idCategoria
+                    WHERE dv.idVenta = :idVenta
+                    ORDER BY dv.idDetalleVenta";
+
+                Dictionary<string, object> parameters = new Dictionary<string, object>
+                {
+                    { ":idVenta", idVenta }
+                };
+
+                DataTable dataTable = ExecuteQuery(query, parameters);
+
+                foreach (DataRow row in dataTable.Rows)
+                {
+                    DetalleVenta detalle = new DetalleVenta
+                    {
+                        IdDetalleVenta = Convert.ToInt32(row["IDDETALLEVENTA"]),
+                        IdVenta = Convert.ToInt32(row["IDVENTA"]),
+                        IdProducto = Convert.ToInt32(row["IDPRODUCTO"]),
+                        Cantidad = Convert.ToInt32(row["CANTIDAD"]),
+                        PrecioUnitario = Convert.ToDouble(row["PRECIOUNITARIO"]),
+                        Descuento = Convert.ToDouble(row["DESCUENTO"]),
+                        Subtotal = Convert.ToDouble(row["SUBTOTAL"]),
+                        Producto = new Producto // Poblar el objeto Producto anidado
+                        {
+                            IdProducto = Convert.ToInt32(row["IDPRODUCTO"]),
+                            Codigo = row["PRODUCTOCODIGO"].ToString(),
+                            Nombre = row["PRODUCTONOMBRE"].ToString(),
+                            IdCategoria = Convert.ToInt32(row["IDCATEGORIA"]),
+                            NombreCategoria = row.Table.Columns.Contains("PRODUCTONOMBRECATEGORIA") && row["PRODUCTONOMBRECATEGORIA"] != DBNull.Value
+                                              ? row["PRODUCTONOMBRECATEGORIA"].ToString()
+                                              : "Sin Categoría" // Valor por defecto si es null
+                        }
+                    };
+                    detalles.Add(detalle);
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger.LogException(ex, $"Error al obtener detalles de la venta {idVenta}");
+                // No relanzar la excepción aquí podría ser una opción si quieres que la venta principal se cargue sin detalles en caso de error
+                // pero para depuración, es mejor relanzarla o al menos loguear extensivamente.
+                // throw new Exception($"Error al obtener detalles para la venta {idVenta}.", ex);
+            }
+            // finally // No cerrar la conexión aquí si es parte de una operación mayor como en ObtenerPorFechas
+            // {
+            //     CloseConnection(); 
+            // }
+            return detalles;
         }
 
         /// <summary>
@@ -649,50 +723,46 @@ namespace ElectroTech.DataAccess
         {
             var venta = new Venta
             {
-                IdVenta = Convert.ToInt32(row["idVenta"]),
-                NumeroFactura = row["numeroFactura"].ToString(),
-                Fecha = Convert.ToDateTime(row["fecha"]),
-                IdCliente = Convert.ToInt32(row["idCliente"]),
-                IdEmpleado = Convert.ToInt32(row["idEmpleado"]),
-                IdMetodoPago = Convert.ToInt32(row["idMetodoPago"]),
-                Subtotal = Convert.ToDouble(row["subtotal"]),
-                Descuento = Convert.ToDouble(row["descuento"]),
-                Impuestos = Convert.ToDouble(row["impuestos"]),
-                Total = Convert.ToDouble(row["total"]),
-                Observaciones = row["observaciones"] != DBNull.Value ? row["observaciones"].ToString() : null,
-                Estado = row["estado"].ToString()[0]
+                IdVenta = Convert.ToInt32(row["IDVENTA"]),
+                NumeroFactura = row["NUMEROFACTURA"].ToString(),
+                Fecha = Convert.ToDateTime(row["FECHA"]),
+                IdCliente = Convert.ToInt32(row["IDCLIENTE"]),
+                IdEmpleado = Convert.ToInt32(row["IDEMPLEADO"]),
+                IdMetodoPago = Convert.ToInt32(row["IDMETODOPAGO"]),
+                Subtotal = Convert.ToDouble(row["SUBTOTAL"]),
+                Descuento = Convert.ToDouble(row["DESCUENTO"]),
+                Impuestos = Convert.ToDouble(row["IMPUESTOS"]),
+                Total = Convert.ToDouble(row["TOTAL"]),
+                Observaciones = row.Table.Columns.Contains("OBSERVACIONES") && row["OBSERVACIONES"] != DBNull.Value ? row["OBSERVACIONES"].ToString() : null,
+                Estado = row["ESTADO"].ToString()[0]
+                // Detalles se cargará por separado
             };
 
-            try
+            if (row.Table.Columns.Contains("CLIENTENOMBRE") && row["CLIENTENOMBRE"] != DBNull.Value &&
+                row.Table.Columns.Contains("CLIENTEAPELLIDO") && row["CLIENTEAPELLIDO"] != DBNull.Value)
             {
-                // Verificar si las columnas de navegación existen en el DataRow
-                if (row.Table.Columns.Contains("nombreCliente") && row["nombreCliente"] != DBNull.Value)
+                venta.Cliente = new Cliente
                 {
-                    venta.Cliente = new Cliente
-                    {
-                        IdCliente = venta.IdCliente,
-                        Nombre = row["nombreCliente"].ToString() // Asignar a Nombre, no a NombreCompleto
-                    };
-                }
-
-                if (row.Table.Columns.Contains("nombreEmpleado") && row["nombreEmpleado"] != DBNull.Value)
-                {
-                    venta.Empleado = new Empleado
-                    {
-                        IdEmpleado = venta.IdEmpleado,
-                        Nombre = row["nombreEmpleado"].ToString() // Asignar a Nombre, no a NombreCompleto
-                    };
-                }
-
-                if (row.Table.Columns.Contains("nombreMetodoPago") && row["nombreMetodoPago"] != DBNull.Value)
-                {
-                    venta.MetodoPagoNombre = row["nombreMetodoPago"].ToString();
-                }
+                    IdCliente = venta.IdCliente,
+                    Nombre = row["CLIENTENOMBRE"].ToString(),
+                    Apellido = row["CLIENTEAPELLIDO"].ToString()
+                };
             }
-            catch (Exception ex)
+
+            if (row.Table.Columns.Contains("EMPLEADONOMBRE") && row["EMPLEADONOMBRE"] != DBNull.Value &&
+                row.Table.Columns.Contains("EMPLEADOAPELLIDO") && row["EMPLEADOAPELLIDO"] != DBNull.Value)
             {
-                // Log warning pero no fallar por problemas de navegación
-                Logger.LogWarning($"Error al establecer propiedades de navegación para venta ID {venta.IdVenta}: {ex.Message}");
+                venta.Empleado = new Empleado
+                {
+                    IdEmpleado = venta.IdEmpleado,
+                    Nombre = row["EMPLEADONOMBRE"].ToString(),
+                    Apellido = row["EMPLEADOAPELLIDO"].ToString()
+                };
+            }
+
+            if (row.Table.Columns.Contains("METODOPAGONOMBRE") && row["METODOPAGONOMBRE"] != DBNull.Value)
+            {
+                venta.MetodoPagoNombre = row["METODOPAGONOMBRE"].ToString();
             }
 
             return venta;

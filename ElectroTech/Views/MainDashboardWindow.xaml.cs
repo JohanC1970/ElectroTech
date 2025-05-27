@@ -5,6 +5,7 @@ using ElectroTech.Views.Compras;
 using ElectroTech.Views.Devoluciones;
 using ElectroTech.Views.Empleados;
 using ElectroTech.Views.Productos;
+using ElectroTech.Views.Reportes;
 using ElectroTech.Views.Ventas;
 using System;
 using System.Windows;
@@ -211,26 +212,23 @@ namespace ElectroTech.Views
 
         private void btnReporteVentas_Click(object sender, RoutedEventArgs e)
         {
-            // TODO: Implementar página de reporte de ventas
-            MessageBox.Show("Funcionalidad en desarrollo", "Información", MessageBoxButton.OK, MessageBoxImage.Information);
+            mainFrame.Navigate(new ReporteVentasPage());
         }
 
         private void btnReporteInventario_Click(object sender, RoutedEventArgs e)
         {
-            // TODO: Implementar página de reporte de inventario
-            MessageBox.Show("Funcionalidad en desarrollo", "Información", MessageBoxButton.OK, MessageBoxImage.Information);
+            mainFrame.Navigate(new ReporteInventarioPage());
         }
 
         private void btnReporteProductos_Click(object sender, RoutedEventArgs e)
         {
-            // TODO: Implementar página de reporte de productos más vendidos
-            MessageBox.Show("Funcionalidad en desarrollo", "Información", MessageBoxButton.OK, MessageBoxImage.Information);
+            mainFrame.Navigate(new ReporteProductosPage());
         }
 
         private void btnReporteClientes_Click(object sender, RoutedEventArgs e)
         {
             // TODO: Implementar página de reporte de clientes frecuentes
-            MessageBox.Show("Funcionalidad en desarrollo", "Información", MessageBoxButton.OK, MessageBoxImage.Information);
+            mainFrame.Navigate(new ReporteClientesPage());
         }
 
         private void btnUsuarios_Click(object sender, RoutedEventArgs e)
