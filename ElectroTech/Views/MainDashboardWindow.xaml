@@ -16,7 +16,6 @@
             <ColumnDefinition Width="*"/>
         </Grid.ColumnDefinitions>
 
-        <!-- Panel de navegación izquierdo -->
         <Border Grid.Column="0" Background="#2E5D7D">
             <Grid>
                 <Grid.RowDefinitions>
@@ -25,131 +24,118 @@
                     <RowDefinition Height="Auto"/>
                 </Grid.RowDefinitions>
 
-                <!-- Logo y título -->
                 <StackPanel Grid.Row="0" Margin="20,30">
-                    <!-- Logo (puedes reemplazar este Rectangle por una Image) -->
                     <TextBlock Text="ElectroTech" 
-                              FontSize="26" 
-                              FontWeight="Bold" 
-                              Foreground="White"
-                              HorizontalAlignment="Center"/>
+                               FontSize="26" 
+                               FontWeight="Bold" 
+                               Foreground="White"
+                               HorizontalAlignment="Center"/>
                     <TextBlock Text="Sistema de Gestión" 
-                              FontSize="14" 
-                              Foreground="#CCCCCC"
-                              HorizontalAlignment="Center"
-                              Margin="0,5,0,20"/>
+                               FontSize="14" 
+                               Foreground="#CCCCCC"
+                               HorizontalAlignment="Center"
+                               Margin="0,5,0,20"/>
                 </StackPanel>
 
-                <!-- Menú de navegación -->
                 <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
                     <StackPanel Margin="10,0">
-                        <!-- Sección Entidades -->
+
+                        <Button x:Name="btnInicioDashboard" 
+                                Content="Inicio" 
+                                Style="{StaticResource MenuButtonStyle}"
+                                Click="btnInicioDashboard_Click"/>
+
+                        <Separator Background="#5D93BC" Margin="10,10"/>
+
                         <TextBlock Text="ENTIDADES" 
-                                  FontSize="12" 
-                                  Foreground="#BBBBBB" 
-                                  Margin="10,5"/>
-
+                                   FontSize="12" 
+                                   Foreground="#BBBBBB" 
+                                   Margin="10,15,10,5"/>
                         <Button x:Name="btnProductos" 
-                               Content="Productos" 
-                               Style="{StaticResource MenuButtonStyle}"
-                               Click="btnProductos_Click"/>
-
+                                Content="Productos" 
+                                Style="{StaticResource MenuButtonStyle}"
+                                Click="btnProductos_Click"/>
                         <Button x:Name="btnCategorias" 
-                               Content="Categorías" 
-                               Style="{StaticResource MenuButtonStyle}"
-                               Click="btnCategorias_Click"/>
-
+                                Content="Categorías" 
+                                Style="{StaticResource MenuButtonStyle}"
+                                Click="btnCategorias_Click"/>
                         <Button x:Name="btnProveedores" 
-                               Content="Proveedores" 
-                               Style="{StaticResource MenuButtonStyle}"
-                               Click="btnProveedores_Click"/>
-
+                                Content="Proveedores" 
+                                Style="{StaticResource MenuButtonStyle}"
+                                Click="btnProveedores_Click"/>
                         <Button x:Name="btnClientes" 
-                               Content="Clientes" 
-                               Style="{StaticResource MenuButtonStyle}"
-                               Click="btnClientes_Click"/>
-
+                                Content="Clientes" 
+                                Style="{StaticResource MenuButtonStyle}"
+                                Click="btnClientes_Click"/>
                         <Button x:Name="btnEmpleados" 
-                               Content="Empleados" 
-                               Style="{StaticResource MenuButtonStyle}"
-                               Click="btnEmpleados_Click"/>
+                                Content="Empleados" 
+                                Style="{StaticResource MenuButtonStyle}"
+                                Click="btnEmpleados_Click"/>
 
-                        <!-- Sección Transacciones -->
                         <TextBlock Text="TRANSACCIONES" 
-                                  FontSize="12" 
-                                  Foreground="#BBBBBB" 
-                                  Margin="10,20,10,5"/>
-
+                                   FontSize="12" 
+                                   Foreground="#BBBBBB" 
+                                   Margin="10,20,10,5"/>
                         <Button x:Name="btnVentas" 
-                               Content="Ventas" 
-                               Style="{StaticResource MenuButtonStyle}"
-                               Click="btnVentas_Click"/>
-
+                                Content="Ventas" 
+                                Style="{StaticResource MenuButtonStyle}"
+                                Click="btnVentas_Click"/>
                         <Button x:Name="btnCompras" 
-                               Content="Compras" 
-                               Style="{StaticResource MenuButtonStyle}"
-                               Click="btnCompras_Click"/>
-
+                                Content="Compras" 
+                                Style="{StaticResource MenuButtonStyle}"
+                                Click="btnCompras_Click"/>
                         <Button x:Name="btnDevoluciones" 
-                               Content="Devoluciones" 
-                               Style="{StaticResource MenuButtonStyle}"
-                               Click="btnDevoluciones_Click"/>
-
+                                Content="Devoluciones" 
+                                Style="{StaticResource MenuButtonStyle}"
+                                Click="btnDevoluciones_Click"/>
                         <Button x:Name="btnInventario" 
-                               Content="Ajustes de Inventario" 
-                               Style="{StaticResource MenuButtonStyle}"
-                               Click="btnInventario_Click"/>
+                                Content="Ajustes de Inventario" 
+                                Style="{StaticResource MenuButtonStyle}"
+                                Click="btnInventario_Click"/>
 
-                        <!-- Sección Reportes -->
                         <TextBlock Text="REPORTES" 
-                                  FontSize="12" 
-                                  Foreground="#BBBBBB" 
-                                  Margin="10,20,10,5"/>
-
+                                   FontSize="12" 
+                                   Foreground="#BBBBBB" 
+                                   Margin="10,20,10,5"/>
                         <Button x:Name="btnReporteVentas" 
-                               Content="Reporte de Ventas" 
-                               Style="{StaticResource MenuButtonStyle}"
-                               Click="btnReporteVentas_Click"/>
-
+                                Content="Reporte de Ventas" 
+                                Style="{StaticResource MenuButtonStyle}"
+                                Click="btnReporteVentas_Click"/>
                         <Button x:Name="btnReporteInventario" 
-                               Content="Reporte de Inventario" 
-                               Style="{StaticResource MenuButtonStyle}"
-                               Click="btnReporteInventario_Click"/>
-
+                                Content="Reporte de Inventario" 
+                                Style="{StaticResource MenuButtonStyle}"
+                                Click="btnReporteInventario_Click"/>
                         <Button x:Name="btnReporteProductos" 
-                               Content="Productos más Vendidos" 
-                               Style="{StaticResource MenuButtonStyle}"
-                               Click="btnReporteProductos_Click"/>
-
+                                Content="Productos más Vendidos" 
+                                Style="{StaticResource MenuButtonStyle}"
+                                Click="btnReporteProductos_Click"/>
                         <Button x:Name="btnReporteClientes" 
-                               Content="Clientes Frecuentes" 
-                               Style="{StaticResource MenuButtonStyle}"
-                               Click="btnReporteClientes_Click"/>
+                                Content="Clientes Frecuentes" 
+                                Style="{StaticResource MenuButtonStyle}"
+                                Click="btnReporteClientes_Click"/>
 
-                        <!-- Sección Configuración (solo admin) -->
-                        <TextBlock x:Name="lblConfiguracion" 
-                                  Text="CONFIGURACIÓN" 
-                                  FontSize="12" 
-                                  Foreground="#BBBBBB" 
-                                  Margin="10,20,10,5"
-                                  Visibility="Collapsed"/>
-
-                        <Button x:Name="btnMiPerfil" Content="Mi Perfil" Click="btnMiPerfil_Click" Style="{StaticResource MenuButtonStyle}"/>
-
+                        <TextBlock x:Name="lblConfiguracionMenu" 
+                                   Text="CONFIGURACIÓN" 
+                                   FontSize="12" 
+                                   Foreground="#BBBBBB" 
+                                   Margin="10,20,10,5"
+                                   Visibility="Collapsed"/>
+                        <Button x:Name="btnMiPerfil" 
+                                Content="Mi Perfil" 
+                                Style="{StaticResource MenuButtonStyle}"
+                                Click="btnMiPerfil_Click"
+                                Visibility="Collapsed"/>
                         <Button x:Name="btnBitacora" 
-                               Content="Bitácora de Accesos" 
-                               Style="{StaticResource MenuButtonStyle}"
-                               Click="btnBitacora_Click"
-                               Visibility="Collapsed"/>
-
-                   
+                                Content="Bitácora de Accesos" 
+                                Style="{StaticResource MenuButtonStyle}"
+                                Click="btnBitacora_Click"
+                                Visibility="Collapsed"/>
                     </StackPanel>
                 </ScrollViewer>
 
-                <!-- Información del usuario y botón de salir -->
                 <Border Grid.Row="2" 
-                       Background="#1E4D6D"
-                       Padding="10">
+                        Background="#1E4D6D"
+                        Padding="10">
                     <Grid>
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*"/>
@@ -158,35 +144,34 @@
 
                         <StackPanel Grid.Column="0" Margin="5,0,0,0">
                             <TextBlock x:Name="txtUsuarioNombre" 
-                                     Text="Nombre Usuario" 
-                                     FontSize="14" 
-                                     Foreground="White"/>
+                                       Text="Nombre Usuario" 
+                                       FontSize="14" 
+                                       Foreground="White"/>
                             <TextBlock x:Name="txtUsuarioNivel" 
-                                     Text="Nivel" 
-                                     FontSize="12" 
-                                     Foreground="#AAAAAA"/>
+                                       Text="Nivel" 
+                                       FontSize="12" 
+                                       Foreground="#AAAAAA"/>
                         </StackPanel>
 
                         <Button Grid.Column="1" 
-                               x:Name="btnCerrarSesion"
-                               Content="Salir" 
-                               Padding="10,5"
-                               Background="Transparent"
-                               Foreground="White"
-                               BorderThickness="1"
-                               BorderBrush="White"
-                               Click="btnCerrarSesion_Click"/>
+                                x:Name="btnCerrarSesion"
+                                Content="Salir" 
+                                Padding="10,5"
+                                Background="Transparent"
+                                Foreground="White"
+                                BorderThickness="1"
+                                BorderBrush="White"
+                                Click="btnCerrarSesion_Click"/>
                     </Grid>
                 </Border>
             </Grid>
         </Border>
 
-        <!-- Contenido principal -->
         <Border Grid.Column="1" 
-               Background="White"
-               Margin="10">
+                Background="White"
+                Margin="10">
             <Frame x:Name="mainFrame" 
-                  NavigationUIVisibility="Hidden"/>
+                   NavigationUIVisibility="Hidden"/>
         </Border>
     </Grid>
 </Window>

@@ -64,6 +64,11 @@ namespace ElectroTech.Views
             txtUsuarioNombre.Text = _usuarioActual.NombreCompleto; //
             txtUsuarioNivel.Text = _usuarioActual.NombreNivel; //
 
+
+            // Botón Inicio siempre visible para usuarios logueados
+            btnInicioDashboard.Visibility = Visibility.Visible;
+            btnInicioDashboard.IsEnabled = true;
+
             // Configurar visibilidad y estado de los elementos de menú según el nivel de usuario
 
             // Sección de Entidades
@@ -91,7 +96,7 @@ namespace ElectroTech.Views
             ConfigurarBotonMenu(btnBitacora, PermisosHelper.Modulo.Bitacora); //
 
             // Ocultar la etiqueta "Configuración" ya que se eliminó el módulo
-            lblConfiguracion.Visibility = Visibility.Collapsed;
+            
             // btnConfiguracion ya no existe, no es necesario configurarlo
         }
 
@@ -153,6 +158,11 @@ namespace ElectroTech.Views
         }
 
         #region Eventos de navegación
+
+        private void btnInicioDashboard_Click(object sender, RoutedEventArgs e)
+        {
+            mainFrame.Navigate(new DashboardPage()); //
+        }
 
         private void btnProductos_Click(object sender, RoutedEventArgs e)
         {
@@ -231,7 +241,7 @@ namespace ElectroTech.Views
             mainFrame.Navigate(new BitacoraPage());  
         }
 
-        // El botón y evento de btnConfiguracion_Click se eliminan
+     
 
         private void btnCerrarSesion_Click(object sender, RoutedEventArgs e)
         {

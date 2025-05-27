@@ -267,5 +267,23 @@ namespace ElectroTech.Services
                 return false;
             }
         }
+
+        /// <summary>
+        /// Obtiene el número total de clientes activos.
+        /// </summary>
+        /// <returns>El número total de clientes activos.</returns>
+        public int ObtenerTotalClientesActivos()
+        {
+            try
+            {
+                return _clienteRepository.ContarClientesActivos(); // Necesitaremos añadir este método al repositorio
+            }
+            catch (Exception ex)
+            {
+                Logger.LogException(ex, "Error al obtener el total de clientes activos"); //
+                return 0;
+            }
+        }
+
     }
 }

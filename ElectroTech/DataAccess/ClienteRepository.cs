@@ -406,5 +406,30 @@ namespace ElectroTech.DataAccess
 
             return cliente;
         }
+
+
+        /// <summary>
+        /// Cuenta el número total de clientes activos.
+        /// </summary>
+        /// <returns>El número total de clientes activos.</returns>
+        public int ContarClientesActivos()
+        {
+            try
+            {
+                string query = "SELECT COUNT(*) FROM Cliente WHERE activo = 'S'";
+                object result = ExecuteScalar(query);
+                return Convert.ToInt32(result);
+            }
+            catch (Exception ex)
+            {
+                Logger.LogException(ex, "Error al contar clientes activos"); //
+                throw new Exception("Error al contar clientes activos.", ex);
+            }
+            finally
+            {
+                CloseConnection();
+            }
+        }
+
     }
 }
