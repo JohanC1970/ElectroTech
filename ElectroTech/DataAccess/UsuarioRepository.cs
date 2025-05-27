@@ -341,40 +341,39 @@ namespace ElectroTech.DataAccess
         public bool Actualizar(Usuario usuario, out string errorMessage)
         {
             errorMessage = string.Empty;
-            // OpenConnection(); // La conexión se abrirá con BeginTransaction o ExecuteNonQuery si es necesario
+            // OpenConnection(); // No es necesario aquí si ExecuteNonQuery lo maneja
             try
             {
                 BeginTransaction();
 
                 // Verificar si el nombre de usuario ya existe para otro usuario
-                // Esta verificación debería usar ExecuteScalar, que ahora maneja su conexión si no hay transacción
-                if (ExisteNombreUsuarioOtroUsuario(usuario.NombreUsuario, usuario.IdUsuario))
+                if (ExisteNombreUsuarioOtroUsuario(usuario.NombreUsuario, usuario.IdUsuario)) //
                 {
                     errorMessage = "El nombre de usuario ya existe para otro usuario.";
-                    RollbackTransaction(); // Importante hacer rollback antes de salir si la transacción se inició
+                    RollbackTransaction();
                     return false;
                 }
 
                 string query = @"
             UPDATE Usuario SET 
                 nombreUsuario = :nombreUsuario,
-                nivel = :nivel,
+                nivel = :nivel,                 -- Asegúrate que estos campos se actualizan
                 nombreCompleto = :nombreCompleto,
                 correo = :correo,
-                estado = :estado
+                estado = :estado                -- Asegúrate que estos campos se actualizan
             WHERE idUsuario = :idUsuario";
 
                 Dictionary<string, object> parameters = new Dictionary<string, object>
-                {
-                    { ":nombreUsuario", usuario.NombreUsuario },
-                    { ":nivel", usuario.Nivel },
-                    { ":nombreCompleto", usuario.NombreCompleto },
-                    { ":correo", usuario.Correo },
-                    { ":estado", usuario.Estado.ToString() },
-                    { ":idUsuario", usuario.IdUsuario }
-                };
+        {
+            { ":nombreUsuario", usuario.NombreUsuario },
+            { ":nivel", usuario.Nivel }, // Pasar el nuevo nivel
+            { ":nombreCompleto", usuario.NombreCompleto },
+            { ":correo", usuario.Correo },
+            { ":estado", usuario.Estado.ToString() }, // Pasar el nuevo estado
+            { ":idUsuario", usuario.IdUsuario }
+        };
 
-                int rowsAffected = ExecuteNonQuery(query, parameters); // Usa la transacción y conexión abiertas
+                int rowsAffected = ExecuteNonQuery(query, parameters);
 
                 if (rowsAffected > 0)
                 {
@@ -390,14 +389,14 @@ namespace ElectroTech.DataAccess
             }
             catch (Exception ex)
             {
-                RollbackTransaction(); // Intenta el rollback
+                RollbackTransaction();
                 errorMessage = ex.Message;
                 Logger.LogException(ex, $"Error al actualizar usuario con ID {usuario.IdUsuario}"); //
                 return false;
             }
             finally
             {
-                EnsureConnectionIsClosed(); // Este método se encargará de cerrar la conexión y limpiar la transacción.
+                EnsureConnectionIsClosed(); // Usa el método unificado para cerrar
             }
         }
 

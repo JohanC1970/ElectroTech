@@ -275,59 +275,85 @@ namespace ElectroTech.Services
         /// <param name="nivelUsuario">Nivel de usuario (opcional).</param>
         /// <param name="errorMessage">Mensaje de error si la actualización falla.</param>
         /// <returns>True si la actualización es exitosa, False en caso contrario.</returns>
-        public bool ActualizarEmpleado(Empleado empleado, string nombreUsuario, int nivelUsuario, out string errorMessage)
+        public bool ActualizarEmpleadoYUsuario(Empleado empleado, Usuario usuarioActualizado, out string errorMessage)
         {
             errorMessage = string.Empty;
 
             try
             {
-                Logger.LogInfo($"=== INICIANDO ACTUALIZACIÓN DE EMPLEADO {empleado.IdEmpleado} ===");
-
-                // Validar datos del empleado
-                if (!ValidarEmpleado(empleado, out errorMessage))
+                // 1. Validar datos del empleado
+                if (!ValidarEmpleado(empleado, out errorMessage)) //
                 {
-                    Logger.LogError($"VALIDACIÓN EMPLEADO FALLIDA: {errorMessage}");
+                    Logger.LogError($"VALIDACIÓN EMPLEADO FALLIDA (ActualizarEmpleadoYUsuario): {errorMessage}"); //
                     return false;
                 }
 
-                // Validar que no exista otro empleado con el mismo documento
-                var empleadoExistente = _empleadoRepository.ObtenerPorDocumento(empleado.TipoDocumento, empleado.NumeroDocumento);
-                if (empleadoExistente != null && empleadoExistente.IdEmpleado != empleado.IdEmpleado)
+                // 2. Validar que no exista otro empleado con el mismo documento
+                var empleadoExistenteConMismoDocumento = _empleadoRepository.ObtenerPorDocumento(empleado.TipoDocumento, empleado.NumeroDocumento); //
+                if (empleadoExistenteConMismoDocumento != null && empleadoExistenteConMismoDocumento.IdEmpleado != empleado.IdEmpleado)
                 {
                     errorMessage = $"Ya existe otro empleado con el documento {empleado.TipoDocumento} {empleado.NumeroDocumento}.";
-                    Logger.LogError($"DOCUMENTO DUPLICADO EN ACTUALIZACIÓN: {errorMessage}");
+                    Logger.LogError($"DOCUMENTO DUPLICADO EN ACTUALIZACIÓN (ActualizarEmpleadoYUsuario): {errorMessage}"); //
                     return false;
                 }
 
-                // Determinar si se debe gestionar usuario
-                bool gestionarUsuario = !string.IsNullOrEmpty(nombreUsuario) && nivelUsuario > 0;
-
-                if (gestionarUsuario)
+                // 3. Actualizar el empleado en la base de datos
+                bool empleadoActualizado = _empleadoRepository.Actualizar(empleado); //
+                if (!empleadoActualizado)
                 {
-                    if (!ValidarDatosUsuario(nombreUsuario, nivelUsuario, out errorMessage, empleado.IdUsuario))
+                    errorMessage = "No se pudo actualizar la información del empleado en la base de datos.";
+                    Logger.LogError($"ERROR ACTUALIZAR EMPLEADO (ActualizarEmpleadoYUsuario): {errorMessage}"); //
+                    return false;
+                }
+                Logger.LogInfo($"Empleado {empleado.IdEmpleado} actualizado correctamente."); //
+
+                // 4. Si se proporcionó un usuario (es decir, chkCrearUsuario estaba marcado y los datos del usuario son válidos)
+                //    Y el empleado tiene un IdUsuario asociado (o se le va a asociar uno nuevo si es creación)
+                if (usuarioActualizado != null && empleado.IdUsuario > 0)
+                {
+                    // Asegurarse que el IdUsuario del objeto 'usuarioActualizado' coincida con el del empleado.
+                    // Esto es importante si el IdUsuario se asignó en 'ObtenerDatosUsuario' basado en '_empleadoActual.IdUsuario'.
+                    usuarioActualizado.IdUsuario = empleado.IdUsuario; //
+
+                    // Sincronizar NombreCompleto del Usuario con el del Empleado
+                    usuarioActualizado.NombreCompleto = empleado.NombreCompleto; //
+
+                    string errorUsuario;
+                    // AuthService.ActualizarUsuario ya contiene la lógica de validación de admin único.
+                    if (!_authService.ActualizarUsuario(usuarioActualizado, out errorUsuario)) //
                     {
-                        Logger.LogError($"VALIDACIÓN USUARIO FALLIDA EN ACTUALIZACIÓN: {errorMessage}");
-                        return false;
+                        // El empleado se actualizó, pero el usuario no.
+                        // Decide cómo manejar este caso: ¿es un error fatal o solo una advertencia?
+                        errorMessage = $"Empleado actualizado, pero hubo un error al actualizar el usuario asociado: {errorUsuario}";
+                        Logger.LogWarning(errorMessage); //
+                                                         // Podrías retornar true aquí si la actualización del empleado fue lo principal,
+                                                         // y el mensaje de error informará sobre el problema con el usuario.
+                                                         // O false si la sincronización es crítica. Por ahora, dejemos que el flujo continúe
+                                                         // y se muestre el mensaje.
+                    }
+                    else
+                    {
+                        Logger.LogInfo($"Usuario asociado {usuarioActualizado.IdUsuario} actualizado correctamente."); //
                     }
                 }
-
-                // Actualizar el empleado
-                bool resultado = _empleadoRepository.Actualizar(empleado);
-
-                if (!resultado)
+                else if (usuarioActualizado == null && empleado.IdUsuario > 0) // _esEdicion viene de EmpleadoDetalleWindow
                 {
-                    errorMessage = "No se pudo actualizar el empleado en la base de datos.";
-                    Logger.LogError($"ERROR AL ACTUALIZAR EMPLEADO {empleado.IdEmpleado}");
-                    return false;
+                    // Esto significa que el checkbox "Gestionar usuario" fue desmarcado para un empleado que SÍ tenía usuario.
+                    // Aquí podrías decidir si quieres inactivar el usuario o desasociarlo.
+                    // Por ahora, lo dejaremos como está, pero es un punto a considerar.
+                    // Podrías llamar a _empleadoRepository.DesasociarUsuario(empleado.IdEmpleado);
+                    // y/o _authService.CambiarEstadoUsuario(empleado.IdUsuario, 'I', out _);
+                    errorMessage = $"Checkbox de gestión de usuario desmarcado para empleado {empleado.IdEmpleado} que tenía usuario. No se realizaron cambios en el usuario.";
+                    Logger.LogInfo($"Checkbox de gestión de usuario desmarcado para empleado {empleado.IdEmpleado} que tenía usuario. No se realizaron cambios en el usuario."); //
                 }
 
-                Logger.LogInfo($"✓ Empleado actualizado exitosamente: {empleado.Nombre} {empleado.Apellido} (ID: {empleado.IdEmpleado})");
-                return true;
+
+                return true; // Si llegó hasta aquí, la actualización del empleado fue exitosa.
             }
             catch (Exception ex)
             {
                 errorMessage = ex.Message;
-                Logger.LogException(ex, $"EXCEPCIÓN al actualizar empleado {empleado.IdEmpleado}");
+                Logger.LogException(ex, $"Error al actualizar empleado y/o usuario para Empleado ID {empleado.IdEmpleado}"); //
                 return false;
             }
         }
@@ -633,19 +659,25 @@ namespace ElectroTech.Services
 
             try
             {
-                // Validar que no exista el documento ANTES de la transacción (Opcional pero eficiente)
+                //Validaciones previas (documento, nombre de usuario)
                 if (_empleadoRepository.ObtenerPorDocumento(empleado.TipoDocumento, empleado.NumeroDocumento) != null)
                 {
                      errorMessage = "Ya existe un empleado con el documento especificado.";
                      return null;
                  }
-                // Validar que no exista el nombre de usuario ANTES (Opcional)
                  if (_usuarioRepository.ExisteNombreUsuario(usuario.NombreUsuario))
                  {
                       errorMessage = "El nombre de usuario ya existe.";
                       return null;
                  }
 
+                 if(usuario.Nivel == 1 && _authService.ExisteAdministrador())
+                 {
+                    errorMessage = "Ya existe un usuario Administrador en el sistema. No se puede crear otro.";
+                    Logger.LogWarning("Intento de crear un segundo administrador (desde EmpleadoService) denegado."); //
+                    return null;
+                 }
+                
                 connection = ConnectionManager.Instance.GetConnection();
                 transaction = connection.BeginTransaction(IsolationLevel.ReadCommitted);
 

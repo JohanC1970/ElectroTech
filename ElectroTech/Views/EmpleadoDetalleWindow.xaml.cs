@@ -323,19 +323,36 @@ namespace ElectroTech.Views.Empleados
         /// Obtiene los datos del usuario desde el formulario
         /// </summary>
         /// <returns>Objeto Usuario con los datos del formulario</returns>
+        // En EmpleadoDetalleWindow.xaml.cs
+
         private Usuario ObtenerDatosUsuario()
         {
-            // Tu código actual parece OK
             if (chkCrearUsuario.IsChecked != true) return null;
+
+            // Validar que los ComboBox tengan un item seleccionado
+            if (cmbNivelUsuario.SelectedItem == null)
+            {
+                MessageBox.Show("Debe seleccionar un nivel para el usuario.", "Validación", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return null; // Indica que hay un error de validación
+            }
+            if (cmbEstadoUsuario.SelectedItem == null)
+            {
+                MessageBox.Show("Debe seleccionar un estado para el usuario.", "Validación", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return null; // Indica que hay un error de validación
+            }
+
             var usuario = new Usuario
             {
-                IdUsuario = 0, // Se asignará al crear
+                // Si es edición y el empleado ya tiene un IdUsuario, lo usamos.
+                // Si es creación o el empleado no tiene IdUsuario, se asignará al crear/asociar.
+                IdUsuario = (_esEdicion && _empleadoActual != null) ? _empleadoActual.IdUsuario : 0,
                 NombreUsuario = txtNombreUsuario.Text.Trim(),
+                // Asegúrate de que el Tag de ComboBoxItem sea el valor numérico/char correcto
                 Nivel = Convert.ToInt32(((ComboBoxItem)cmbNivelUsuario.SelectedItem).Tag),
                 NombreCompleto = $"{txtNombre.Text.Trim()} {txtApellido.Text.Trim()}",
                 Correo = txtCorreoUsuario.Text.Trim(),
                 Estado = ((ComboBoxItem)cmbEstadoUsuario.SelectedItem).Tag.ToString()[0],
-                // Clave, FechaCreacion, UltimaConexion se manejan en Servicio
+                // Clave, FechaCreacion, UltimaConexion se manejan en Servicio/Repositorio
             };
             return usuario;
         }
@@ -361,6 +378,7 @@ namespace ElectroTech.Views.Empleados
         /// <summary>
         /// Evento del botón Guardar
         /// </summary>
+
         private void btnGuardar_Click(object sender, RoutedEventArgs e)
         {
             if (!ValidarFormulario()) return;
@@ -368,20 +386,21 @@ namespace ElectroTech.Views.Empleados
             btnGuardar.IsEnabled = false;
             btnGuardar.Content = "Guardando...";
 
-            var empleado = ObtenerDatosEmpleado();
-            var usuario = ObtenerDatosUsuario();
-            string contraseña = txtPassword.Password; // Obtener contraseña
+            var empleado = ObtenerDatosEmpleado(); // Este ya debería tener el IdUsuario correcto si es edición
+            var usuario = ObtenerDatosUsuario(); // Este obtiene los datos del formulario para el usuario
+                                                 // Si chkCrearUsuario no está marcado, usuario será null.
+
             string errorMessage;
-            bool resultado;
+            // bool resultado; // Ya no la necesitamos directamente aquí para el mensaje
+
             try
             {
                 if (_esEdicion)
                 {
-                    resultado = _empleadoService.ActualizarEmpleado(empleado, usuario.NombreUsuario, usuario.Nivel, out errorMessage);
-
-                    if (resultado)
+                    // Llamamos al nuevo método que maneja la actualización de ambos
+                    if (_empleadoService.ActualizarEmpleadoYUsuario(empleado, usuario, out errorMessage)) // Asumiendo que _esEdicion se pasa al servicio o se infiere
                     {
-                        MessageBox.Show("Empleado actualizado correctamente.", "Éxito", MessageBoxButton.OK, MessageBoxImage.Information);
+                        MessageBox.Show("Empleado y/o usuario asociado actualizado correctamente.", "Éxito", MessageBoxButton.OK, MessageBoxImage.Information);
                         this.DialogResult = true;
                         this.Close();
                     }
@@ -392,18 +411,20 @@ namespace ElectroTech.Views.Empleados
                 }
                 else // Es creación
                 {
-                    if (usuario == null) // Debería estar forzado a true, pero por si acaso
+                    if (usuario == null)
                     {
-                        MessageBox.Show("Es necesario crear un usuario para un nuevo empleado.", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                        MessageBox.Show("Es necesario proporcionar datos de usuario para un nuevo empleado si la opción está marcada.", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                        btnGuardar.IsEnabled = true;
+                        btnGuardar.Content = "Guardar";
                         return;
                     }
+                    string contraseña = txtPassword.Password; //
 
-                    // LLAMAR AL NUEVO MÉTODO DEL SERVICIO
-                    var empleadoCreado = _empleadoService.RegistrarEmpleadoYUsuario(empleado, usuario, contraseña, out errorMessage);
+                    var empleadoCreado = _empleadoService.RegistrarEmpleadoYUsuario(empleado, usuario, contraseña, out errorMessage); //
 
                     if (empleadoCreado != null)
                     {
-                        MessageBox.Show($"Empleado y Usuario creados correctamente.\nUsuario: {usuario.NombreUsuario}\nID Empleado: {empleadoCreado.IdEmpleado}",
+                        MessageBox.Show($"Empleado y Usuario creados correctamente.\nUsuario: {usuario.NombreUsuario}\nID Empleado: {empleadoCreado.IdEmpleado}", //
                                         "Éxito", MessageBoxButton.OK, MessageBoxImage.Information);
                         this.DialogResult = true;
                         this.Close();
@@ -416,7 +437,7 @@ namespace ElectroTech.Views.Empleados
             }
             catch (Exception ex)
             {
-                // Logger.LogException(ex, "Error al guardar empleado");
+                Logger.LogException(ex, "Error al guardar empleado"); //
                 MessageBox.Show($"Error inesperado: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
             finally
