@@ -1,18 +1,55 @@
 ﻿<Application x:Class="ElectroTech.App"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:local="clr-namespace:ElectroTech" xmlns:local1="clr-namespace:ElectroTech.Helpers">
-    <!-- Eliminamos el StartupUri para controlar la ventana inicial desde App.xaml.cs -->
+             xmlns:local="clr-namespace:ElectroTech" 
+             xmlns:local1="clr-namespace:ElectroTech.Helpers">
     <Application.Resources>
         <ResourceDictionary>
-            <!-- Estilos generales de la aplicación -->
+            <Color x:Key="ColorPrincipalDefinida">#2E5D7D</Color>
+            <Color x:Key="ColorPrincipalHoverDefinida">#1E4D6D</Color>
+            <Color x:Key="ColorPrincipalPressedDefinida">#0E3D5D</Color>
+            <Color x:Key="ColorSecundarioDefinida">#5D93BC</Color>
+            <Color x:Key="ColorSecundarioHoverDefinida">#4A7AA7</Color>
+            <Color x:Key="ColorSecundarioPressedDefinida">#376188</Color>
+            <Color x:Key="ColorTextoClaroDefinida">White</Color>
+            <Color x:Key="ColorFondoPaginaDefinida">#F5F5F5</Color>
+            <Color x:Key="ColorBotonDeshabilitadoFondoDefinida">#CCCCCC</Color>
+            <Color x:Key="ColorBotonDeshabilitadoTextoDefinida">#888888</Color>
+            <Color x:Key="ColorTextoPrincipalDefinida">#333333</Color>
+            <Color x:Key="ColorFondoControlDefinida">White</Color>
+            <Color x:Key="ColorBordeControlDefinida">#CCCCCC</Color>
+            <Color x:Key="ColorErrorDefinida">#D32F2F</Color>
+            <Color x:Key="ColorExitoDefinida">#388E3C</Color>
 
-            <!-- Estilo para TextBox -->
+            <SolidColorBrush x:Key="PrimaryBrush" Color="{StaticResource ColorPrincipalDefinida}"/>
+            <SolidColorBrush x:Key="PrimaryHoverBrush" Color="{StaticResource ColorPrincipalHoverDefinida}"/>
+            <SolidColorBrush x:Key="PrimaryPressedBrush" Color="{StaticResource ColorPrincipalPressedDefinida}"/>
+            <SolidColorBrush x:Key="SecondaryBrush" Color="{StaticResource ColorSecundarioDefinida}"/>
+            <SolidColorBrush x:Key="SecondaryHoverBrush" Color="{StaticResource ColorSecundarioHoverDefinida}"/>
+            <SolidColorBrush x:Key="SecondaryPressedBrush" Color="{StaticResource ColorSecundarioPressedDefinida}"/>
+            <SolidColorBrush x:Key="LightTextBrush" Color="{StaticResource ColorTextoClaroDefinida}"/>
+            <SolidColorBrush x:Key="PageBackgroundBrush" Color="{StaticResource ColorFondoPaginaDefinida}"/>
+            <SolidColorBrush x:Key="DisabledButtonBackgroundBrush" Color="{StaticResource ColorBotonDeshabilitadoFondoDefinida}"/>
+            <SolidColorBrush x:Key="DisabledButtonForegroundBrush" Color="{StaticResource ColorBotonDeshabilitadoTextoDefinida}"/>
+            <SolidColorBrush x:Key="TextBrush" Color="{StaticResource ColorTextoPrincipalDefinida}"/>
+            <SolidColorBrush x:Key="ControlBackgroundBrush" Color="{StaticResource ColorFondoControlDefinida}"/>
+            <SolidColorBrush x:Key="ControlBorderBrush" Color="{StaticResource ColorBordeControlDefinida}"/>
+            <SolidColorBrush x:Key="ErrorBrush" Color="{StaticResource ColorErrorDefinida}"/>
+            <SolidColorBrush x:Key="SuccessBrush" Color="{StaticResource ColorExitoDefinida}"/>
+            <SolidColorBrush x:Key="BackgroundBrush" Color="{StaticResource ColorFondoPaginaDefinida}"/>
+
+            <local1:BoolToSiNoConverter x:Key="BoolToSiNoConverter"/>
+            <local1:BoolToColorConverter x:Key="BoolToColorConverter"/>
+            <local1:BoolToEstadoConverter x:Key="BoolToEstadoConverter"/>
+            <local1:BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
+            <local1:InverseBooleanToVisibilityConverter x:Key="InverseBooleanToVisibilityConverter"/>
+
             <Style TargetType="TextBox">
                 <Setter Property="Padding" Value="8,5"/>
                 <Setter Property="BorderThickness" Value="1"/>
-                <Setter Property="BorderBrush" Value="#CCCCCC"/>
-                <Setter Property="Background" Value="White"/>
+                <Setter Property="BorderBrush" Value="{StaticResource ControlBorderBrush}"/>
+                <Setter Property="Background" Value="{StaticResource ControlBackgroundBrush}"/>
+                <Setter Property="Foreground" Value="{StaticResource TextBrush}"/>
                 <Setter Property="Template">
                     <Setter.Value>
                         <ControlTemplate TargetType="TextBox">
@@ -26,20 +63,12 @@
                     </Setter.Value>
                 </Setter>
             </Style>
-
-            <!-- Value Converters -->
-            <local1:BoolToSiNoConverter x:Key="BoolToSiNoConverter"/>
-            <local1:BoolToColorConverter x:Key="BoolToColorConverter"/>
-            <local1:BoolToEstadoConverter x:Key="BoolToEstadoConverter"/>
-            <local1:BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
-            <local1:InverseBooleanToVisibilityConverter x:Key="InverseBooleanToVisibilityConverter"/>
-            
-            <!-- Estilo para PasswordBox -->
             <Style TargetType="PasswordBox">
                 <Setter Property="Padding" Value="8,5"/>
                 <Setter Property="BorderThickness" Value="1"/>
-                <Setter Property="BorderBrush" Value="#CCCCCC"/>
-                <Setter Property="Background" Value="White"/>
+                <Setter Property="BorderBrush" Value="{StaticResource ControlBorderBrush}"/>
+                <Setter Property="Background" Value="{StaticResource ControlBackgroundBrush}"/>
+                <Setter Property="Foreground" Value="{StaticResource TextBrush}"/>
                 <Setter Property="Template">
                     <Setter.Value>
                         <ControlTemplate TargetType="PasswordBox">
@@ -54,17 +83,17 @@
                 </Setter>
             </Style>
 
-            <!-- Estilo para Button -->
-            <Style TargetType="Button">
+            <Style x:Key="BaseButtonStyle" TargetType="Button">
                 <Setter Property="Padding" Value="15,8"/>
-                <Setter Property="Background" Value="#2E5D7D"/>
-                <Setter Property="Foreground" Value="White"/>
                 <Setter Property="BorderThickness" Value="0"/>
                 <Setter Property="FontWeight" Value="SemiBold"/>
+                <Setter Property="Cursor" Value="Hand"/>
+                <Setter Property="MinWidth" Value="100"/>
                 <Setter Property="Template">
                     <Setter.Value>
                         <ControlTemplate TargetType="Button">
-                            <Border Background="{TemplateBinding Background}"
+                            <Border x:Name="border" 
+                                    Background="{TemplateBinding Background}"
                                     BorderBrush="{TemplateBinding BorderBrush}"
                                     BorderThickness="{TemplateBinding BorderThickness}"
                                     CornerRadius="4">
@@ -72,91 +101,136 @@
                                                   VerticalAlignment="Center"
                                                   Margin="{TemplateBinding Padding}"/>
                             </Border>
-                            <ControlTemplate.Triggers>
-                                <Trigger Property="IsMouseOver" Value="True">
-                                    <Setter Property="Background" Value="#1E4D6D"/>
-                                </Trigger>
-                                <Trigger Property="IsPressed" Value="True">
-                                    <Setter Property="Background" Value="#0E3D5D"/>
-                                </Trigger>
-                                <Trigger Property="IsEnabled" Value="False">
-                                    <Setter Property="Background" Value="#CCCCCC"/>
-                                    <Setter Property="Foreground" Value="#888888"/>
-                                </Trigger>
-                            </ControlTemplate.Triggers>
                         </ControlTemplate>
                     </Setter.Value>
                 </Setter>
             </Style>
 
-            <!-- Estilo para botones de enlace (sin borde) -->
-            <Style x:Key="LinkButtonStyle" TargetType="Button">
+            <Style x:Key="PrimaryActionButtonStyle" TargetType="Button" BasedOn="{StaticResource BaseButtonStyle}">
+                <Setter Property="Background" Value="{StaticResource PrimaryBrush}"/>
+                <Setter Property="Foreground" Value="{StaticResource LightTextBrush}"/>
+                <Style.Triggers>
+                    <Trigger Property="IsMouseOver" Value="True">
+                        <Setter Property="Background" Value="{StaticResource PrimaryHoverBrush}"/>
+                    </Trigger>
+                    <Trigger Property="IsPressed" Value="True">
+                        <Setter Property="Background" Value="{StaticResource PrimaryPressedBrush}"/>
+                    </Trigger>
+                    <Trigger Property="IsEnabled" Value="False">
+                        <Setter Property="Background" Value="{StaticResource DisabledButtonBackgroundBrush}"/>
+                        <Setter Property="Foreground" Value="{StaticResource DisabledButtonForegroundBrush}"/>
+                    </Trigger>
+                </Style.Triggers>
+            </Style>
+
+            <Style TargetType="Button" BasedOn="{StaticResource PrimaryActionButtonStyle}"/>
+
+
+            <Style x:Key="SecondaryActionButtonStyle" TargetType="Button" BasedOn="{StaticResource BaseButtonStyle}">
+                <Setter Property="Background" Value="{StaticResource SecondaryBrush}"/>
+                <Setter Property="Foreground" Value="{StaticResource LightTextBrush}"/>
+                <Style.Triggers>
+                    <Trigger Property="IsMouseOver" Value="True">
+                        <Setter Property="Background" Value="{StaticResource SecondaryHoverBrush}"/>
+                    </Trigger>
+                    <Trigger Property="IsPressed" Value="True">
+                        <Setter Property="Background" Value="{StaticResource SecondaryPressedBrush}"/>
+                    </Trigger>
+                    <Trigger Property="IsEnabled" Value="False">
+                        <Setter Property="Background" Value="{StaticResource DisabledButtonBackgroundBrush}"/>
+                        <Setter Property="Foreground" Value="{StaticResource DisabledButtonForegroundBrush}"/>
+                    </Trigger>
+                </Style.Triggers>
+            </Style>
+
+            <Style x:Key="LinkButtonStyle" TargetType="Button" BasedOn="{StaticResource BaseButtonStyle}">
                 <Setter Property="Background" Value="Transparent"/>
-                <Setter Property="Foreground" Value="#2E5D7D"/>
-                <Setter Property="BorderThickness" Value="0"/>
-                <Setter Property="Cursor" Value="Hand"/>
-                <Setter Property="Template">
-                    <Setter.Value>
-                        <ControlTemplate TargetType="Button">
-                            <ContentPresenter HorizontalAlignment="Center"
-                                              VerticalAlignment="Center"
-                                              Margin="{TemplateBinding Padding}"/>
-                            <ControlTemplate.Triggers>
-                                <Trigger Property="IsMouseOver" Value="True">
-                                    <Setter Property="TextBlock.TextDecorations" Value="Underline"/>
-                                </Trigger>
-                            </ControlTemplate.Triggers>
-                        </ControlTemplate>
-                    </Setter.Value>
-                </Setter>
+                <Setter Property="Foreground" Value="{StaticResource PrimaryBrush}"/>
+                <Setter Property="Padding" Value="5"/>
+                <Style.Triggers>
+                    <Trigger Property="IsMouseOver" Value="True">
+                        <Setter Property="TextBlock.TextDecorations" Value="Underline"/>
+                        <Setter Property="Foreground" Value="{StaticResource PrimaryHoverBrush}"/>
+                    </Trigger>
+                    <Trigger Property="IsPressed" Value="True">
+                        <Setter Property="Foreground" Value="{StaticResource PrimaryPressedBrush}"/>
+                    </Trigger>
+                    <Trigger Property="IsEnabled" Value="False">
+                        <Setter Property="Foreground" Value="{StaticResource DisabledButtonForegroundBrush}"/>
+                        <Setter Property="TextBlock.TextDecorations" Value="{x:Null}"/>
+                    </Trigger>
+                </Style.Triggers>
             </Style>
 
-            <!-- Estilo para los botones del menú lateral -->
-            <Style x:Key="MenuButtonStyle" TargetType="Button">
+            <Style x:Key="MenuButtonStyle" TargetType="Button" BasedOn="{StaticResource BaseButtonStyle}">
                 <Setter Property="Height" Value="40"/>
                 <Setter Property="Margin" Value="0,3"/>
                 <Setter Property="Background" Value="Transparent"/>
-                <Setter Property="Foreground" Value="White"/>
+                <Setter Property="Foreground" Value="{StaticResource LightTextBrush}"/>
                 <Setter Property="FontSize" Value="14"/>
                 <Setter Property="HorizontalContentAlignment" Value="Left"/>
                 <Setter Property="Padding" Value="15,0"/>
-                <Setter Property="BorderThickness" Value="0"/>
-                <Setter Property="Cursor" Value="Hand"/>
-                <Setter Property="Template">
-                    <Setter.Value>
-                        <ControlTemplate TargetType="Button">
-                            <Border Background="{TemplateBinding Background}"
-                                    BorderBrush="{TemplateBinding BorderBrush}"
-                                    BorderThickness="{TemplateBinding BorderThickness}"
-                                    CornerRadius="4">
-                                <ContentPresenter HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
-                                                  VerticalAlignment="Center"
-                                                  Margin="{TemplateBinding Padding}"/>
-                            </Border>
-                            <ControlTemplate.Triggers>
-                                <Trigger Property="IsMouseOver" Value="True">
-                                    <Setter Property="Background" Value="#1E4D6D"/>
-                                </Trigger>
-                                <Trigger Property="IsPressed" Value="True">
-                                    <Setter Property="Background" Value="#0E3D5D"/>
-                                </Trigger>
-                                <Trigger Property="IsEnabled" Value="False">
-                                    <Setter Property="Opacity" Value="0.5"/>
-                                </Trigger>
-                            </ControlTemplate.Triggers>
-                        </ControlTemplate>
-                    </Setter.Value>
-                </Setter>
+                <Style.Triggers>
+                    <Trigger Property="IsMouseOver" Value="True">
+                        <Setter Property="Background" Value="{StaticResource PrimaryHoverBrush}"/>
+                    </Trigger>
+                    <Trigger Property="IsPressed" Value="True">
+                        <Setter Property="Background" Value="{StaticResource PrimaryPressedBrush}"/>
+                    </Trigger>
+                    <Trigger Property="IsEnabled" Value="False">
+                        <Setter Property="Opacity" Value="0.5"/>
+                        <Setter Property="Foreground" Value="{StaticResource LightTextBrush}"/>
+                    </Trigger>
+                </Style.Triggers>
             </Style>
 
-            <!-- Colores de la aplicación -->
-            <SolidColorBrush x:Key="PrimaryColor" Color="#2E5D7D"/>
-            <SolidColorBrush x:Key="SecondaryColor" Color="#5D93BC"/>
-            <SolidColorBrush x:Key="AccentColor" Color="#F0A830"/>
-            <SolidColorBrush x:Key="TextColor" Color="#333333"/>
-            <SolidColorBrush x:Key="BackgroundColor" Color="#F5F5F5"/>
-            <SolidColorBrush x:Key="ErrorColor" Color="#D32F2F"/>
-            <SolidColorBrush x:Key="SuccessColor" Color="#388E3C"/>
+            <Style x:Key="PageBorderStyle" TargetType="Border">
+                <Setter Property="Padding" Value="10"/>
+                <Setter Property="BorderBrush" Value="{StaticResource ControlBorderBrush}"/>
+                <Setter Property="BorderThickness" Value="1"/>
+                <Setter Property="CornerRadius" Value="5"/>
+                <Setter Property="Background" Value="{StaticResource ControlBackgroundBrush}"/>
+            </Style>
+            <Style x:Key="TitleTextBlockStyle" TargetType="TextBlock">
+                <Setter Property="FontSize" Value="24"/>
+                <Setter Property="FontWeight" Value="Bold"/>
+                <Setter Property="Foreground" Value="{StaticResource TextBrush}"/>
+            </Style>
+            <Style x:Key="LabelStyle" TargetType="TextBlock">
+                <Setter Property="VerticalAlignment" Value="Center"/>
+                <Setter Property="Margin" Value="0,0,10,0"/>
+                <Setter Property="FontWeight" Value="SemiBold"/>
+                <Setter Property="Foreground" Value="{StaticResource TextBrush}"/>
+            </Style>
+            <Style x:Key="ReadOnlyTextBoxStyle" TargetType="TextBox" BasedOn="{StaticResource {x:Type TextBox}}">
+                <Setter Property="IsReadOnly" Value="True"/>
+                <Setter Property="Background" Value="#FFEFEFEF"/>
+            </Style>
+            <Style x:Key="FormTextBoxStyle" TargetType="TextBox" BasedOn="{StaticResource {x:Type TextBox}}">
+                <Setter Property="MinWidth" Value="200"/>
+            </Style>
+            <Style x:Key="FormDatePickerStyle" TargetType="DatePicker">
+                <Setter Property="Margin" Value="0,5,0,5"/>
+                <Setter Property="Padding" Value="5"/>
+                <Setter Property="BorderBrush" Value="{StaticResource ControlBorderBrush}"/>
+                <Setter Property="BorderThickness" Value="1"/>
+                <Setter Property="VerticalContentAlignment" Value="Center"/>
+            </Style>
+            <Style x:Key="ErrorTextBlockStyle" TargetType="TextBlock">
+                <Setter Property="Foreground" Value="{StaticResource ErrorBrush}"/>
+                <Setter Property="Margin" Value="0,5,0,0"/>
+                <Setter Property="TextWrapping" Value="Wrap"/>
+            </Style>
+            <Style x:Key="DataGridStyle" TargetType="DataGrid">
+                <Setter Property="Margin" Value="0,10,0,0"/>
+                <Setter Property="AutoGenerateColumns" Value="False"/>
+                <Setter Property="CanUserAddRows" Value="False"/>
+                <Setter Property="CanUserDeleteRows" Value="False"/>
+                <Setter Property="IsReadOnly" Value="True"/>
+                <Setter Property="AlternatingRowBackground" Value="#FFEAEAEA"/>
+                <Setter Property="RowHeaderWidth" Value="0"/>
+            </Style>
+
         </ResourceDictionary>
     </Application.Resources>
 </Application>

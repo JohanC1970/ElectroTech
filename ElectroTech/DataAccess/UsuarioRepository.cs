@@ -337,15 +337,17 @@ namespace ElectroTech.DataAccess
         /// <param name="usuario">Usuario con los datos actualizados.</param>
         /// <param name="errorMessage">Mensaje de error si la actualización falla.</param>
         /// <returns>True si la actualización es exitosa, False en caso contrario.</returns>
+        // En UsuarioRepository.cs
         public bool Actualizar(Usuario usuario, out string errorMessage)
         {
             errorMessage = string.Empty;
+            // OpenConnection(); // No es necesario aquí si ExecuteNonQuery lo maneja
             try
             {
                 BeginTransaction();
 
                 // Verificar si el nombre de usuario ya existe para otro usuario
-                if (ExisteNombreUsuarioOtroUsuario(usuario.NombreUsuario, usuario.IdUsuario))
+                if (ExisteNombreUsuarioOtroUsuario(usuario.NombreUsuario, usuario.IdUsuario)) //
                 {
                     errorMessage = "El nombre de usuario ya existe para otro usuario.";
                     RollbackTransaction();
@@ -355,19 +357,19 @@ namespace ElectroTech.DataAccess
                 string query = @"
             UPDATE Usuario SET 
                 nombreUsuario = :nombreUsuario,
-                nivel = :nivel,
+                nivel = :nivel,                 -- Asegúrate que estos campos se actualizan
                 nombreCompleto = :nombreCompleto,
                 correo = :correo,
-                estado = :estado
+                estado = :estado                -- Asegúrate que estos campos se actualizan
             WHERE idUsuario = :idUsuario";
 
                 Dictionary<string, object> parameters = new Dictionary<string, object>
         {
             { ":nombreUsuario", usuario.NombreUsuario },
-            { ":nivel", usuario.Nivel },
+            { ":nivel", usuario.Nivel }, // Pasar el nuevo nivel
             { ":nombreCompleto", usuario.NombreCompleto },
             { ":correo", usuario.Correo },
-            { ":estado", usuario.Estado.ToString() },
+            { ":estado", usuario.Estado.ToString() }, // Pasar el nuevo estado
             { ":idUsuario", usuario.IdUsuario }
         };
 
@@ -380,7 +382,7 @@ namespace ElectroTech.DataAccess
                 }
                 else
                 {
-                    errorMessage = "No se encontró el usuario a actualizar.";
+                    errorMessage = "No se encontró el usuario a actualizar o no se realizaron cambios.";
                     RollbackTransaction();
                     return false;
                 }
@@ -389,12 +391,12 @@ namespace ElectroTech.DataAccess
             {
                 RollbackTransaction();
                 errorMessage = ex.Message;
-                Logger.LogException(ex, $"Error al actualizar usuario con ID {usuario.IdUsuario}");
+                Logger.LogException(ex, $"Error al actualizar usuario con ID {usuario.IdUsuario}"); //
                 return false;
             }
             finally
             {
-                CloseConnection();
+                EnsureConnectionIsClosed(); // Usa el método unificado para cerrar
             }
         }
 

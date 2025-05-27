@@ -1,0 +1,64 @@
+﻿<Page x:Class="ElectroTech.Views.Perfil.MiPerfilPage"
+      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+      xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+      xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+      xmlns:local="clr-namespace:ElectroTech.Views.Perfil"
+      mc:Ignorable="d" 
+      d:DesignHeight="600" d:DesignWidth="800"
+      Title="Mi Perfil">
+
+    <Grid Background="{StaticResource BackgroundBrush}">
+        <Border Style="{StaticResource PageBorderStyle}">
+            <ScrollViewer VerticalScrollBarVisibility="Auto">
+                <StackPanel Margin="20">
+                    <TextBlock Text="Mi Perfil" Style="{StaticResource TitleTextBlockStyle}" HorizontalAlignment="Center" Margin="0,0,0,30"/>
+
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+
+                        <TextBlock Grid.Row="0" Grid.Column="0" Text="Nombre de Usuario:" Style="{StaticResource LabelStyle}"/>
+                        <TextBox x:Name="txtNombreUsuario" Grid.Row="0" Grid.Column="1" Style="{StaticResource ReadOnlyTextBoxStyle}" IsReadOnly="True"/>
+
+                        <TextBlock Grid.Row="1" Grid.Column="0" Text="Nombre Completo:" Style="{StaticResource LabelStyle}"/>
+                        <TextBox x:Name="txtNombreCompleto" Grid.Row="1" Grid.Column="1" Style="{StaticResource FormTextBoxStyle}"/>
+
+                        <TextBlock Grid.Row="2" Grid.Column="0" Text="Correo Electrónico:" Style="{StaticResource LabelStyle}"/>
+                        <TextBox x:Name="txtCorreo" Grid.Row="2" Grid.Column="1" Style="{StaticResource FormTextBoxStyle}"/>
+
+                        <TextBlock Grid.Row="3" Grid.Column="0" Text="Nivel de Acceso:" Style="{StaticResource LabelStyle}"/>
+                        <TextBox x:Name="txtNivelAcceso" Grid.Row="3" Grid.Column="1" Style="{StaticResource ReadOnlyTextBoxStyle}" IsReadOnly="True"/>
+
+                        <TextBlock Grid.Row="4" Grid.Column="0" Text="Fecha de Creación:" Style="{StaticResource LabelStyle}"/>
+                        <TextBox x:Name="txtFechaCreacion" Grid.Row="4" Grid.Column="1" Style="{StaticResource ReadOnlyTextBoxStyle}" IsReadOnly="True"/>
+
+                        <TextBlock Grid.Row="5" Grid.Column="0" Text="Última Conexión:" Style="{StaticResource LabelStyle}"/>
+                        <TextBox x:Name="txtUltimaConexion" Grid.Row="5" Grid.Column="1" Style="{StaticResource ReadOnlyTextBoxStyle}" IsReadOnly="True"/>
+
+                        <TextBlock Grid.Row="6" Grid.Column="0" Text="Contraseña:" Style="{StaticResource LabelStyle}"/>
+                        <Button x:Name="btnCambiarContrasena" Grid.Row="6" Grid.Column="1" Content="Cambiar Contraseña" Style="{StaticResource PrimaryActionButtonStyle}" HorizontalAlignment="Left" Click="btnCambiarContrasena_Click" Margin="0,5,0,0" Background="#FF2B93ED"/>
+
+                    </Grid>
+
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,30,0,0">
+                        <Button x:Name="btnGuardarCambios" Content="Guardar Cambios" Style="{StaticResource PrimaryActionButtonStyle}" Click="btnGuardarCambios_Click" Background="#FF1F85DE"/>
+                    </StackPanel>
+                    <TextBlock x:Name="txtError" Style="{StaticResource ErrorTextBlockStyle}" Visibility="Collapsed" Margin="0,10,0,0"/>
+                </StackPanel>
+            </ScrollViewer>
+        </Border>
+    </Grid>
+</Page>

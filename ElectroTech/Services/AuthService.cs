@@ -106,8 +106,8 @@ namespace ElectroTech.Services
             try
             {
                 // Verificar que la contraseña actual sea correcta
-                string hashedCurrentPassword = PasswordValidator.HashPassword(claveActual);
-                Usuario userCheck = _usuarioRepository.Autenticar(usuario.NombreUsuario, hashedCurrentPassword);
+                
+                Usuario userCheck = _usuarioRepository.Autenticar(usuario.NombreUsuario, claveActual);
 
                 if (userCheck == null)
                 {
@@ -159,6 +159,14 @@ namespace ElectroTech.Services
                     return false;
                 }
 
+
+                if(usuario.Nivel == 1 && ExisteAdministrador())
+                {
+                    
+                    errorMessage = "Ya existe un usuario administrador en el sistema.";
+                    return false;
+                }
+
                 // Validar contraseña
                 if (string.IsNullOrWhiteSpace(contrasena) || contrasena.Length < 8)
                 {
@@ -201,6 +209,19 @@ namespace ElectroTech.Services
                 if (!ValidarUsuario(usuario, out errorMessage))
                 {
                     return false;
+                }
+
+                // Verificar si el usuario es administrador y si ya existe otro administrador
+                if (usuario.Nivel == 1)
+                {
+                    int idAdminExistente = _usuarioRepository.ObtenerIdAdministrador(); //
+                    // Si hay un admin y NO es el usuario que estamos editando
+                    if (idAdminExistente != -1 && idAdminExistente != usuario.IdUsuario)
+                    {
+                        errorMessage = "Ya existe otro usuario Administrador en el sistema. No se puede asignar este nivel.";
+                        Logger.LogWarning($"Intento de asignar nivel admin a {usuario.NombreUsuario} (ID: {usuario.IdUsuario}) denegado. Admin existente ID: {idAdminExistente}."); //
+                        return false;
+                    }
                 }
 
                 // Actualizar usuario sin cambiar contraseña
